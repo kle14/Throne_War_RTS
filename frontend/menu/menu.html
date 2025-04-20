@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Throne Wars RTS - Menu</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0a0a1a;
+            color: #fff;
+            background-image: url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-4.0.3');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .menu-container {
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(0, 30, 60, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 100, 255, 0.5);
+            width: 80%;
+            max-width: 500px;
+        }
+        
+        .game-title {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #4fc3f7;
+            text-shadow: 0 0 10px rgba(79, 195, 247, 0.8);
+        }
+        
+        .game-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            color: #81d4fa;
+        }
+        
+        .menu-button {
+            display: block;
+            width: 80%;
+            margin: 15px auto;
+            padding: 15px;
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-button:hover {
+            background-color: #42a5f5;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(66, 165, 245, 0.8);
+        }
+        
+        .menu-button:active {
+            transform: scale(0.98);
+        }
+        
+        .hexagon-decoration {
+            position: absolute;
+            opacity: 0.15;
+            z-index: -1;
+        }
+        
+        #hex1 {
+            top: 10%;
+            left: 5%;
+            width: 200px;
+            height: 200px;
+            transform: rotate(30deg);
+        }
+        
+        #hex2 {
+            bottom: 15%;
+            right: 10%;
+            width: 300px;
+            height: 300px;
+            transform: rotate(15deg);
+        }
+        
+        .footer {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #90caf9;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hexagon decorations in background -->
+    <svg class="hexagon-decoration" id="hex1" viewBox="0 0 100 100">
+        <polygon points="50,0 100,25 100,75 50,100 0,75 0,25" fill="#1565c0" />
+    </svg>
+    
+    <svg class="hexagon-decoration" id="hex2" viewBox="0 0 100 100">
+        <polygon points="50,0 100,25 100,75 50,100 0,75 0,25" fill="#0d47a1" />
+    </svg>
+    
+    <div class="overlay">
+        <div class="menu-container">
+            <h1 class="game-title">Throne Wars RTS</h1>
+            <p class="game-subtitle">Conquer the hexagonal realms</p>
+            
+            <button class="menu-button" onclick="location.href='/game/'">Start Game</button>
+            <button class="menu-button">How to Play</button>
+            <button class="menu-button">Settings</button>
+            <button class="menu-button">Credits</button>
+            <button class="menu-button">Exit</button>
+        </div>
+    </div>
+    
+    <div class="footer">
+        &copy; 2025 Throne Wars RTS - All rights reserved
+    </div>
+
+    <script>
+        // Add any menu functionality script here
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Menu loaded successfully");
+            
+            // You can add animations or other menu interactivity here
+        });
+    </script>
+</body>
+</html>

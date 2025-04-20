@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gameuser
+      POSTGRES_PASSWORD: gamepassword
+      POSTGRES_DB: rtsgame
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gameuser -d rtsgame"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000" # FastAPI
+      - "8080:8080" # Phaser/Frontend
+    environment:
+      - DATABASE_URL=postgresql://gameuser:gamepassword@db:5432/rtsgame
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      bash -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload & 
+      cd frontend && http-server -p 8080"
+
+volumes:
+  postgres_data:
