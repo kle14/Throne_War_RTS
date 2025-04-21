@@ -20,10 +20,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Game objects
   let tank;
-  let soldiers = [];
+  let infantryUnits = []; // Changed from soldiers to infantryUnits
   let selectedUnit = null;
   let unitFactory;
-  const NUM_SOLDIERS = 3; // Number of soldiers to create
+  const NUM_INFANTRY = 3; // Changed from NUM_SOLDIERS to NUM_INFANTRY
 
   function create() {
     const scene = this;
@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("Hexagonal map created with WASD camera controls");
   }
 
-  // Helper function to create game objects like tanks and soldiers
+  // Helper function to create game objects like tanks and infantry units
   function createGameObjects(scene) {
     // Find grass tiles for placing units
     const grassTiles = scene.hexTiles.filter(
@@ -153,9 +153,9 @@ document.addEventListener("DOMContentLoaded", function () {
       tank = null;
     }
 
-    if (soldiers.length > 0) {
-      soldiers.forEach((soldier) => soldier.destroy());
-      soldiers = [];
+    if (infantryUnits.length > 0) {
+      infantryUnits.forEach((unit) => unit.destroy());
+      infantryUnits = [];
     }
 
     // Create a tank using the factory - we'll place it in the center of available tiles
@@ -165,10 +165,10 @@ document.addEventListener("DOMContentLoaded", function () {
       position: { tileIndex: centerIndex },
     });
 
-    // Create soldiers using the factory
-    soldiers = unitFactory.createMultipleUnits(Soldier, NUM_SOLDIERS, {
+    // Create infantry units using the factory
+    infantryUnits = unitFactory.createMultipleUnits(Infantry, NUM_INFANTRY, {
       validTiles: grassTiles,
-      preventOverlap: true, // Prevent soldiers from spawning on the same tile
+      preventOverlap: true, // Prevent infantry units from spawning on the same tile
     });
   }
 
@@ -193,8 +193,8 @@ document.addEventListener("DOMContentLoaded", function () {
       tank.update();
     }
 
-    if (soldiers.length > 0) {
-      soldiers.forEach((soldier) => soldier.update());
+    if (infantryUnits.length > 0) {
+      infantryUnits.forEach((unit) => unit.update());
     }
   }
 
