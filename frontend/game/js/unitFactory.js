@@ -136,6 +136,38 @@ class UnitFactory {
 
     return closestTile;
   }
+
+  // Create a builder unit
+  createBuilder(options = {}) {
+    const validTiles =
+      options.validTiles ||
+      this.scene.hexTiles.filter((hex) => hex.color === CONSTANTS.COLORS.GRASS);
+
+    if (validTiles.length === 0) {
+      console.error("No valid tiles found to place builder!");
+      return null;
+    }
+
+    let tileIndex = 0;
+
+    // Use provided position if available
+    if (options.position) {
+      if (options.position.tileIndex !== undefined) {
+        tileIndex = options.position.tileIndex;
+      }
+    } else {
+      // Otherwise, pick a random position
+      tileIndex = Math.floor(Math.random() * validTiles.length);
+    }
+
+    // Get the chosen tile
+    const chosenTile = validTiles[tileIndex % validTiles.length];
+
+    // Create the builder at the tile position
+    const builder = new Builder(this.scene, chosenTile.x, chosenTile.y);
+
+    return builder;
+  }
 }
 
 // Export the UnitFactory class
