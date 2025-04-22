@@ -14,6 +14,7 @@ class Tank extends Mobile_Object {
     // Create tank sprite
     this.sprite = scene.add.graphics();
     this.sprite.setPosition(x, y);
+    this.sprite.setDepth(10); // Set a higher depth to appear above path lines
 
     // Create a hit area for the tank
     this.hitArea = scene.add.circle(x, y, 25);

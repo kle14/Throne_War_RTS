@@ -4,15 +4,22 @@ class PathVisualizer {
 
     // Main path graphics for complete path visualization
     this.graphics = scene.add.graphics();
-    this.graphics.setDepth(5);
+    this.graphics.setDepth(1);
 
-    // Progress graphics for showing the current progress along the path
+    // Progress graphics for showing the current active segment
     this.progressGraphics = scene.add.graphics();
-    this.progressGraphics.setDepth(6);
+    this.progressGraphics.setDepth(1);
 
     // Store the full path for reference
     this.currentPath = [];
+    this.completedPath = []; // Track completed path segments
     this.startPosition = { x: 0, y: 0 };
+    this.currentPosition = { x: 0, y: 0 }; // Current position along the path
+
+    // Path visibility state
+    this.isTransparent = false;
+    this.normalOpacity = CONSTANTS.PATH.OPACITY || 0.8;
+    this.transparentOpacity = 0.3; // Reduced opacity when deselected
 
     // Dash properties
     this.dashLength = CONSTANTS.PATH.DASH_LENGTH || 10;
@@ -31,18 +38,21 @@ class PathVisualizer {
 
     if (!points || points.length === 0) {
       this.currentPath = [];
+      this.completedPath = [];
       return;
     }
 
     // Store path information
     this.startPosition = { x: startX, y: startY };
+    this.currentPosition = { x: startX, y: startY };
     this.currentPath = [...points];
+    this.completedPath = [];
 
     // Set line style
     this.graphics.lineStyle(
       CONSTANTS.PATH.LINE_WIDTH,
       CONSTANTS.COLORS.PATH,
-      CONSTANTS.PATH.OPACITY
+      this.isTransparent ? this.transparentOpacity : this.normalOpacity
     );
 
     // Draw the smooth dashed path
@@ -144,34 +154,179 @@ class PathVisualizer {
    * @param {Array} remainingPath - Array of remaining path points
    */
   updatePathProgress(currentX, currentY, remainingPath) {
-    // Clear the progress indicator
-    this.progressGraphics.clear();
+    // Store current position
+    this.currentPosition = { x: currentX, y: currentY };
 
-    if (!remainingPath || remainingPath.length === 0) {
-      return;
+    // If we've reached a waypoint, add it to the completed path
+    if (
+      this.currentPath.length > 0 &&
+      remainingPath.length < this.currentPath.length
+    ) {
+      // Find the points that were completed
+      const completedPoints = this.currentPath.filter(
+        (point) => !remainingPath.includes(point)
+      );
+
+      // Add to completed path
+      this.completedPath = [...this.completedPath, ...completedPoints];
+
+      // Update current path to be only the remaining points
+      this.currentPath = [...remainingPath];
     }
 
-    // Draw the progress indicator with a different color/style
-    this.progressGraphics.lineStyle(
-      CONSTANTS.PATH.LINE_WIDTH + 1,
-      CONSTANTS.COLORS.PATH,
-      CONSTANTS.PATH.OPACITY + 0.3
-    );
+    // Clear all graphics before redrawing
+    this.graphics.clear();
+    this.progressGraphics.clear();
 
-    // Get the next point
-    const nextPoint = remainingPath[0];
+    if (remainingPath && remainingPath.length > 0) {
+      // Define a buffer zone around the unit where no path should be drawn
+      const bufferRadius = 35; // Increased buffer size (was 25)
 
-    // Draw a highlighted segment for the current active path segment
-    this.progressGraphics.beginPath();
-    this.progressGraphics.moveTo(currentX, currentY);
-    this.progressGraphics.lineTo(nextPoint.x, nextPoint.y);
-    this.progressGraphics.strokePath();
+      // Draw only remaining path segments - but create a gap from current position
+      if (remainingPath.length > 0) {
+        const nextPoint = remainingPath[0];
+
+        // Calculate distance from troop to next point
+        const distanceToNext = Phaser.Math.Distance.Between(
+          currentX,
+          currentY,
+          nextPoint.x,
+          nextPoint.y
+        );
+
+        // Only draw path if the next point is far enough from the unit
+        if (distanceToNext > bufferRadius * 2) {
+          // Calculate a starting point for the path that's outside the buffer zone
+          const angle = Math.atan2(
+            nextPoint.y - currentY,
+            nextPoint.x - currentX
+          );
+          const startX = currentX + Math.cos(angle) * bufferRadius;
+          const startY = currentY + Math.sin(angle) * bufferRadius;
+
+          // Draw the path starting from the buffer zone boundary, not from the unit itself
+          this.graphics.lineStyle(
+            CONSTANTS.PATH.LINE_WIDTH,
+            CONSTANTS.COLORS.PATH,
+            this.isTransparent ? this.transparentOpacity : this.normalOpacity
+          );
+
+          // Draw active segment from buffer zone to first waypoint
+          this.drawDashedLine(
+            startX,
+            startY,
+            nextPoint.x,
+            nextPoint.y,
+            this.graphics,
+            this.dashLength,
+            this.gapLength
+          );
+
+          // Draw remaining path if there are more points
+          if (remainingPath.length > 1) {
+            const remainingPointsExceptFirst = remainingPath.slice(1);
+            this.drawSmoothDashedPath(
+              nextPoint.x,
+              nextPoint.y,
+              remainingPointsExceptFirst
+            );
+          }
+        }
+        // If next point is very close, only draw the path beyond it
+        else if (remainingPath.length > 1) {
+          const secondPoint = remainingPath[1];
+          const remainingPointsExceptFirstTwo = remainingPath.slice(2);
+          this.drawSmoothDashedPath(
+            secondPoint.x,
+            secondPoint.y,
+            remainingPointsExceptFirstTwo
+          );
+        }
+      }
+    }
+  }
+
+  /**
+   * Draw a single dashed line between two points
+   * Used for the current active segment
+   */
+  drawDashedLine(x1, y1, x2, y2, graphics, dashLength, gapLength) {
+    const distance = Phaser.Math.Distance.Between(x1, y1, x2, y2);
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+
+    let currentDistance = 0;
+    let drawing = true;
+    let dashRemaining = dashLength;
+    let gapRemaining = gapLength;
+
+    while (currentDistance < distance) {
+      if (drawing) {
+        // Calculate dash segment
+        const dashDistance = Math.min(
+          dashRemaining,
+          distance - currentDistance
+        );
+        const startX = x1 + Math.cos(angle) * currentDistance;
+        const startY = y1 + Math.sin(angle) * currentDistance;
+        const endX = x1 + Math.cos(angle) * (currentDistance + dashDistance);
+        const endY = y1 + Math.sin(angle) * (currentDistance + dashDistance);
+
+        // Draw the dash
+        graphics.beginPath();
+        graphics.moveTo(startX, startY);
+        graphics.lineTo(endX, endY);
+        graphics.strokePath();
+
+        // Update tracking variables
+        currentDistance += dashDistance;
+        dashRemaining -= dashDistance;
+
+        if (dashRemaining <= 0) {
+          drawing = false;
+          gapRemaining = gapLength;
+        }
+      } else {
+        // Skip gap
+        const gapDistance = Math.min(gapRemaining, distance - currentDistance);
+        currentDistance += gapDistance;
+        gapRemaining -= gapDistance;
+
+        if (gapRemaining <= 0) {
+          drawing = true;
+          dashRemaining = dashLength;
+        }
+      }
+    }
+  }
+
+  /**
+   * Set the path to be transparent (when unit is deselected)
+   */
+  setTransparent(transparent) {
+    this.isTransparent = transparent;
+
+    // If we have an active path, redraw it with the new transparency
+    if (this.currentPath && this.currentPath.length > 0) {
+      // Clear all graphics before redrawing
+      this.graphics.clear();
+      this.progressGraphics.clear();
+
+      // Simply call the updatePathProgress method to redraw paths with new transparency
+      // This ensures consistent drawing logic between updates and transparency changes
+      this.updatePathProgress(
+        this.currentPosition.x,
+        this.currentPosition.y,
+        this.currentPath
+      );
+    }
   }
 
   // Clear the path visualization
   clear() {
     this.graphics.clear();
     this.progressGraphics.clear();
+    this.currentPath = [];
+    this.completedPath = [];
   }
 
   // Clean up resources

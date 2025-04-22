@@ -44,6 +44,14 @@ const CONSTANTS = {
     LINE_WIDTH: 2,
     OPACITY: 0.8,
   },
+
+  // Economy settings
+  ECONOMY: {
+    INITIAL_GOLD: 500,
+    BASE_PRODUCTION_RATE: 500, // Gold per minute
+    TANK_COST: 150,
+    INFANTRY_COST: 50,
+  },
 };
 
 // Make constants available globally
