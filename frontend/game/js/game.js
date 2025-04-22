@@ -22,11 +22,19 @@ document.addEventListener("DOMContentLoaded", function () {
   // Game objects
   let tank;
   let infantryUnits = []; // Changed from soldiers to infantryUnits
+  let rocketeerUnits = []; // New array for rocketeer units
+  let engineerUnits = []; // New array for engineer units
+  let scoutUnits = []; // New array for scout units
+  let sniperUnits = []; // New array for sniper units
   let selectedUnit = null;
   let selectedUnits = []; // Array to track multiple selected units
   let selectedBuilding = null; // Track selected building
   let unitFactory;
   const NUM_INFANTRY = 3; // Changed from NUM_SOLDIERS to NUM_INFANTRY
+  const NUM_ROCKETEERS = 2; // Number of rocketeers to create
+  const NUM_ENGINEERS = 2; // Number of engineers to create
+  const NUM_SCOUTS = 2; // Number of scouts to create
+  const NUM_SNIPERS = 2; // Number of snipers to create
 
   // Player management
   let players = [];
@@ -435,6 +443,27 @@ document.addEventListener("DOMContentLoaded", function () {
         infantryUnits = [];
       }
 
+      // Clean up new unit types
+      if (rocketeerUnits.length > 0) {
+        rocketeerUnits.forEach((unit) => unit.destroy());
+        rocketeerUnits = [];
+      }
+
+      if (engineerUnits.length > 0) {
+        engineerUnits.forEach((unit) => unit.destroy());
+        engineerUnits = [];
+      }
+
+      if (scoutUnits.length > 0) {
+        scoutUnits.forEach((unit) => unit.destroy());
+        scoutUnits = [];
+      }
+
+      if (sniperUnits.length > 0) {
+        sniperUnits.forEach((unit) => unit.destroy());
+        sniperUnits = [];
+      }
+
       // Create a tank using the factory - we'll place it in the center of available tiles
       const centerIndex = Math.floor(grassTiles.length / 2);
       tank = unitFactory.createUnit(Tank, {
@@ -460,6 +489,52 @@ document.addEventListener("DOMContentLoaded", function () {
         infantryUnits.forEach((unit) => {
           if (unit) currentPlayer.addUnit(unit);
         });
+      }
+
+      // Create specialized units
+      // Create rocketeer units
+      rocketeerUnits = unitFactory.createMultipleUnits(
+        Rocketeer,
+        NUM_ROCKETEERS,
+        {
+          validTiles: grassTiles,
+          preventOverlap: true,
+          cost: CONSTANTS.ECONOMY.ROCKETEER_COST || 300,
+        }
+      );
+
+      // Create engineer units
+      engineerUnits = unitFactory.createMultipleUnits(Engineer, NUM_ENGINEERS, {
+        validTiles: grassTiles,
+        preventOverlap: true,
+        cost: CONSTANTS.ECONOMY.ENGINEER_COST || 250,
+      });
+
+      // Create scout units
+      scoutUnits = unitFactory.createMultipleUnits(Scout, NUM_SCOUTS, {
+        validTiles: grassTiles,
+        preventOverlap: true,
+        cost: CONSTANTS.ECONOMY.SCOUT_COST || 150,
+      });
+
+      // Create sniper units
+      sniperUnits = unitFactory.createMultipleUnits(Sniper, NUM_SNIPERS, {
+        validTiles: grassTiles,
+        preventOverlap: true,
+        cost: CONSTANTS.ECONOMY.SNIPER_COST || 350,
+      });
+
+      // Add all specialized units to current player
+      if (currentPlayer) {
+        [rocketeerUnits, engineerUnits, scoutUnits, sniperUnits].forEach(
+          (unitArray) => {
+            if (unitArray && unitArray.length > 0) {
+              unitArray.forEach((unit) => {
+                if (unit) currentPlayer.addUnit(unit);
+              });
+            }
+          }
+        );
       }
 
       // Create a builder for each player
@@ -530,6 +605,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (infantryUnits && infantryUnits.length > 0) {
         infantryUnits.forEach((unit) => {
+          if (unit) unit.update();
+        });
+      }
+
+      // Update specialized units
+      if (rocketeerUnits && rocketeerUnits.length > 0) {
+        rocketeerUnits.forEach((unit) => {
+          if (unit) unit.update();
+        });
+      }
+
+      if (engineerUnits && engineerUnits.length > 0) {
+        engineerUnits.forEach((unit) => {
+          if (unit) unit.update();
+        });
+      }
+
+      if (scoutUnits && scoutUnits.length > 0) {
+        scoutUnits.forEach((unit) => {
+          if (unit) unit.update();
+        });
+      }
+
+      if (sniperUnits && sniperUnits.length > 0) {
+        sniperUnits.forEach((unit) => {
           if (unit) unit.update();
         });
       }
