@@ -166,6 +166,13 @@ class UnitFactory {
     // Create the builder at the tile position
     const builder = new Builder(this.scene, chosenTile.x, chosenTile.y);
 
+    // Set up event handlers
+    if (typeof builder.setupEvents === "function") {
+      builder.setupEvents();
+    }
+
+    console.log(`Created Builder at position:`, chosenTile.x, chosenTile.y);
+
     return builder;
   }
 }

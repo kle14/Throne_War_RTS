@@ -280,12 +280,12 @@ class Building {
     const uiX = this.x + this.size * 2.5;
     const uiY = this.y - this.size * 1.5;
 
-    // Background panel - more transparent and larger
+    // Background panel - more transparent and larger to fit more units
     const panel = this.scene.add.rectangle(
       uiX,
       uiY,
       this.size * 4,
-      this.size * 3.5,
+      this.size * 6, // Increased height to fit more buttons
       0x000000,
       0.5 // More transparent
     );
@@ -328,107 +328,65 @@ class Building {
     productionLabel.setDepth(101);
     this.barracksUI.push(productionLabel);
 
-    // Infantry button - wider with some spacing
-    const infantryBtn = this.scene.add.rectangle(
-      uiX,
-      uiY + this.size * 1.8,
-      this.size * 3,
-      this.size * 0.8,
-      buttonColor,
-      0.8
-    );
-    infantryBtn.setOrigin(0.5, 0);
-    infantryBtn.setDepth(101);
-    infantryBtn.setInteractive({ useHandCursor: true });
-    infantryBtn.on("pointerdown", () => {
-      console.log("Infantry button clicked");
-      this.produceUnit("infantry");
-    });
-    infantryBtn.on("pointerover", () => {
-      infantryBtn.setAlpha(1);
-    });
-    infantryBtn.on("pointerout", () => {
-      infantryBtn.setAlpha(0.8);
-    });
-    this.barracksUI.push(infantryBtn);
+    // Unit button creation helper function
+    const createUnitButton = (unitType, yOffset, cost) => {
+      const displayName = unitType.charAt(0).toUpperCase() + unitType.slice(1);
+      const btn = this.scene.add.rectangle(
+        uiX,
+        uiY + yOffset,
+        this.size * 3,
+        this.size * 0.8,
+        buttonColor,
+        0.8
+      );
+      btn.setOrigin(0.5, 0);
+      btn.setDepth(101);
+      btn.setInteractive({ useHandCursor: true });
+      btn.on("pointerdown", () => {
+        console.log(`${displayName} button clicked`);
+        this.produceUnit(unitType);
+      });
+      btn.on("pointerover", () => {
+        btn.setAlpha(1);
+      });
+      btn.on("pointerout", () => {
+        btn.setAlpha(0.8);
+      });
+      this.barracksUI.push(btn);
 
-    // Infantry button border
-    const infantryBtnBorder = this.scene.add.graphics();
-    infantryBtnBorder.lineStyle(2, buttonBorderColor, 0.5);
-    infantryBtnBorder.strokeRect(
-      infantryBtn.x - infantryBtn.width / 2,
-      infantryBtn.y,
-      infantryBtn.width,
-      infantryBtn.height
-    );
-    infantryBtnBorder.setDepth(101);
-    this.barracksUI.push(infantryBtnBorder);
+      // Button border
+      const btnBorder = this.scene.add.graphics();
+      btnBorder.lineStyle(2, buttonBorderColor, 0.5);
+      btnBorder.strokeRect(btn.x - btn.width / 2, btn.y, btn.width, btn.height);
+      btnBorder.setDepth(101);
+      this.barracksUI.push(btnBorder);
 
-    // Infantry text
-    const infantryText = this.scene.add.text(
-      uiX,
-      uiY + this.size * 2.0,
-      `Infantry - ${CONSTANTS.ECONOMY.INFANTRY_COST}G`,
-      {
-        fontSize: "10px",
-        fill: "#FFFFFF",
-        align: "center",
-      }
-    );
-    infantryText.setOrigin(0.5, 0);
-    infantryText.setDepth(102);
-    this.barracksUI.push(infantryText);
+      // Button text
+      const btnText = this.scene.add.text(
+        uiX,
+        uiY + yOffset + this.size * 0.2,
+        `${displayName} - ${cost}G`,
+        {
+          fontSize: "10px",
+          fill: "#FFFFFF",
+          align: "center",
+        }
+      );
+      btnText.setOrigin(0.5, 0);
+      btnText.setDepth(102);
+      this.barracksUI.push(btnText);
+    };
 
-    // Builder button - wider with some spacing
-    const builderBtn = this.scene.add.rectangle(
-      uiX,
-      uiY + this.size * 2.8,
-      this.size * 3,
-      this.size * 0.8,
-      buttonColor,
-      0.8
+    // Create unit buttons
+    createUnitButton(
+      "infantry",
+      this.size * 1.8,
+      CONSTANTS.ECONOMY.INFANTRY_COST
     );
-    builderBtn.setOrigin(0.5, 0);
-    builderBtn.setDepth(101);
-    builderBtn.setInteractive({ useHandCursor: true });
-    builderBtn.on("pointerdown", () => {
-      console.log("Builder button clicked");
-      this.produceUnit("builder");
-    });
-    builderBtn.on("pointerover", () => {
-      builderBtn.setAlpha(1);
-    });
-    builderBtn.on("pointerout", () => {
-      builderBtn.setAlpha(0.8);
-    });
-    this.barracksUI.push(builderBtn);
-
-    // Builder button border
-    const builderBtnBorder = this.scene.add.graphics();
-    builderBtnBorder.lineStyle(2, buttonBorderColor, 0.5);
-    builderBtnBorder.strokeRect(
-      builderBtn.x - builderBtn.width / 2,
-      builderBtn.y,
-      builderBtn.width,
-      builderBtn.height
-    );
-    builderBtnBorder.setDepth(101);
-    this.barracksUI.push(builderBtnBorder);
-
-    // Builder text
-    const builderText = this.scene.add.text(
-      uiX,
-      uiY + this.size * 3.0,
-      `Builder - 100G`,
-      {
-        fontSize: "10px",
-        fill: "#FFFFFF",
-        align: "center",
-      }
-    );
-    builderText.setOrigin(0.5, 0);
-    builderText.setDepth(102);
-    this.barracksUI.push(builderText);
+    createUnitButton("builder", this.size * 2.8, 100);
+    createUnitButton("scout", this.size * 3.8, 150);
+    createUnitButton("sniper", this.size * 4.8, 350);
+    createUnitButton("rocketeer", this.size * 5.8, 300);
 
     // Close button (X in the corner)
     const closeBtn = this.scene.add.text(
@@ -479,10 +437,25 @@ class Building {
     }
 
     // Determine cost based on unit type
-    if (unitType === "infantry") {
-      cost = CONSTANTS.ECONOMY.INFANTRY_COST;
-    } else if (unitType === "builder") {
-      cost = 100; // Builder cost
+    switch (unitType) {
+      case "infantry":
+        cost = CONSTANTS.ECONOMY.INFANTRY_COST;
+        break;
+      case "builder":
+        cost = 100; // Builder cost
+        break;
+      case "scout":
+        cost = 150; // Scout cost
+        break;
+      case "sniper":
+        cost = 350; // Sniper cost
+        break;
+      case "rocketeer":
+        cost = 300; // Rocketeer cost
+        break;
+      default:
+        console.error(`Unknown unit type: ${unitType}`);
+        return;
     }
 
     // Check if player can afford it
@@ -513,28 +486,50 @@ class Building {
     // Create the unit
     let createdUnit = null;
 
-    if (unitType === "infantry") {
-      createdUnit = unitFactory.createUnit(Infantry, {
-        validTiles: validTiles,
-        cost: CONSTANTS.ECONOMY.INFANTRY_COST,
-      });
-
-      if (createdUnit) {
-        this.owner.addUnit(createdUnit);
-      }
-    } else if (unitType === "builder") {
-      createdUnit = unitFactory.createBuilder({
-        validTiles: validTiles,
-      });
-
-      if (createdUnit) {
-        this.owner.addBuilder(createdUnit);
-      }
+    switch (unitType) {
+      case "infantry":
+        createdUnit = unitFactory.createUnit(Infantry, {
+          validTiles: validTiles,
+          cost: CONSTANTS.ECONOMY.INFANTRY_COST,
+        });
+        break;
+      case "builder":
+        createdUnit = unitFactory.createBuilder({
+          validTiles: validTiles,
+        });
+        break;
+      case "scout":
+        createdUnit = unitFactory.createUnit(Scout, {
+          validTiles: validTiles,
+          cost: 150,
+        });
+        break;
+      case "sniper":
+        createdUnit = unitFactory.createUnit(Sniper, {
+          validTiles: validTiles,
+          cost: 350,
+        });
+        break;
+      case "rocketeer":
+        createdUnit = unitFactory.createUnit(Rocketeer, {
+          validTiles: validTiles,
+          cost: 300,
+        });
+        break;
     }
 
-    // Show success message
-    if (createdUnit && this.scene.shop) {
-      this.scene.shop.showMessage(`${unitType} created!`);
+    // Add the unit to the player's units
+    if (createdUnit) {
+      if (unitType === "builder") {
+        this.owner.addBuilder(createdUnit);
+      } else {
+        this.owner.addUnit(createdUnit);
+      }
+
+      // Show success message
+      if (this.scene.shop) {
+        this.scene.shop.showMessage(`${unitType} created!`);
+      }
     }
   }
 
