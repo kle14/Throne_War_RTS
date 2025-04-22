@@ -21,13 +21,29 @@
     </style>
     <!-- Load Phaser framework -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
-    <!-- Load game files in correct order -->
+
+    <!-- Load core game files -->
     <script src="./js/constants.js"></script>
+
+    <!-- Load object hierarchy (order matters for inheritance) -->
+    <script src="./js/Objects/mobile_object.js"></script>
+    <script src="./js/Objects/Character/constants.js"></script>
+    <script src="./js/Objects/Character/base_character.js"></script>
+    <script src="./js/Objects/Character/infantry.js"></script>
+    <script src="./js/Objects/Character/rocketeer.js"></script>
+    <script src="./js/Objects/Character/engineer.js"></script>
+    <script src="./js/Objects/Character/scout.js"></script>
+    <script src="./js/Objects/Character/sniper.js"></script>
+
+    <!-- Load vehicle classes -->
+    <script src="./js/Objects/Land_Vehicle/tank.js"></script>
+
+    <!-- Load game mechanics -->
     <script src="./js/pathfinding.js"></script>
     <script src="./js/pathVisualizer.js"></script>
     <script src="./js/unitFactory.js"></script>
-    <script src="./js/tank.js"></script>
-    <script src="./js/soldier.js"></script>
+
+    <!-- Load main game file -->
     <script src="./js/game.js"></script>
 </head>
 

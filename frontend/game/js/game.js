@@ -21,9 +21,17 @@ document.addEventListener("DOMContentLoaded", function () {
   // Game objects
   let tank;
   let infantryUnits = []; // Changed from soldiers to infantryUnits
+  let rocketeerUnits = []; // New array for rocketeer units
+  let engineerUnits = []; // New array for engineer units
+  let scoutUnits = []; // New array for scout units
+  let sniperUnits = []; // New array for sniper units
   let selectedUnit = null;
   let unitFactory;
   const NUM_INFANTRY = 3; // Changed from NUM_SOLDIERS to NUM_INFANTRY
+  const NUM_ROCKETEERS = 2; // Number of rocketeers to create
+  const NUM_ENGINEERS = 2; // Number of engineers to create
+  const NUM_SCOUTS = 2; // Number of scouts to create
+  const NUM_SNIPERS = 2; // Number of snipers to create
 
   function create() {
     const scene = this;
@@ -158,6 +166,26 @@ document.addEventListener("DOMContentLoaded", function () {
       infantryUnits = [];
     }
 
+    if (rocketeerUnits.length > 0) {
+      rocketeerUnits.forEach((unit) => unit.destroy());
+      rocketeerUnits = [];
+    }
+
+    if (scoutUnits.length > 0) {
+      scoutUnits.forEach((unit) => unit.destroy());
+      scoutUnits = [];
+    }
+
+    if (engineerUnits.length > 0) {
+      engineerUnits.forEach((unit) => unit.destroy());
+      engineerUnits = [];
+    }
+
+    if (sniperUnits.length > 0) {
+      sniperUnits.forEach((unit) => unit.destroy());
+      sniperUnits = [];
+    }
+
     // Create a tank using the factory - we'll place it in the center of available tiles
     const centerIndex = Math.floor(grassTiles.length / 2);
     tank = unitFactory.createUnit(Tank, {
@@ -169,6 +197,34 @@ document.addEventListener("DOMContentLoaded", function () {
     infantryUnits = unitFactory.createMultipleUnits(Infantry, NUM_INFANTRY, {
       validTiles: grassTiles,
       preventOverlap: true, // Prevent infantry units from spawning on the same tile
+    });
+
+    // Create scout units using the factory
+    scoutUnits = unitFactory.createMultipleUnits(Scout, NUM_SCOUTS, {
+      validTiles: grassTiles,
+      preventOverlap: true, // Prevent scout units from spawning on the same tile
+    });
+
+    // Create rocketeer units using the factory
+    rocketeerUnits = unitFactory.createMultipleUnits(
+      Rocketeer,
+      NUM_ROCKETEERS,
+      {
+        validTiles: grassTiles,
+        preventOverlap: true, // Prevent rocketeer units from spawning on the same tile
+      }
+    );
+
+    // Create engineer units using the factory
+    engineerUnits = unitFactory.createMultipleUnits(Engineer, NUM_ENGINEERS, {
+      validTiles: grassTiles,
+      preventOverlap: true, // Prevent engineer units from spawning on the same tile
+    });
+
+    // Create sniper units using the factory
+    sniperUnits = unitFactory.createMultipleUnits(Sniper, NUM_SNIPERS, {
+      validTiles: grassTiles,
+      preventOverlap: true, // Prevent sniper units from spawning on the same tile
     });
   }
 
@@ -195,6 +251,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (infantryUnits.length > 0) {
       infantryUnits.forEach((unit) => unit.update());
+    }
+
+    if (rocketeerUnits.length > 0) {
+      rocketeerUnits.forEach((unit) => unit.update());
+    }
+
+    if (scoutUnits.length > 0) {
+      scoutUnits.forEach((unit) => unit.update());
+    }
+
+    if (engineerUnits.length > 0) {
+      engineerUnits.forEach((unit) => unit.update());
+    }
+
+    if (sniperUnits.length > 0) {
+      sniperUnits.forEach((unit) => unit.update());
     }
   }
 
