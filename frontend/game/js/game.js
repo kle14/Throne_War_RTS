@@ -464,80 +464,7 @@ document.addEventListener("DOMContentLoaded", function () {
         sniperUnits = [];
       }
 
-      // Create a tank using the factory - we'll place it in the center of available tiles
-      const centerIndex = Math.floor(grassTiles.length / 2);
-      tank = unitFactory.createUnit(Tank, {
-        validTiles: grassTiles,
-        position: { tileIndex: centerIndex },
-        cost: CONSTANTS.ECONOMY.TANK_COST,
-      });
-
-      // Add tank to current player
-      if (currentPlayer && tank) {
-        currentPlayer.addUnit(tank);
-      }
-
-      // Create infantry units using the factory
-      infantryUnits = unitFactory.createMultipleUnits(Infantry, NUM_INFANTRY, {
-        validTiles: grassTiles,
-        preventOverlap: true, // Prevent infantry units from spawning on the same tile
-        cost: CONSTANTS.ECONOMY.INFANTRY_COST,
-      });
-
-      // Add infantry units to current player
-      if (currentPlayer && infantryUnits && infantryUnits.length > 0) {
-        infantryUnits.forEach((unit) => {
-          if (unit) currentPlayer.addUnit(unit);
-        });
-      }
-
-      // Create specialized units
-      // Create rocketeer units
-      rocketeerUnits = unitFactory.createMultipleUnits(
-        Rocketeer,
-        NUM_ROCKETEERS,
-        {
-          validTiles: grassTiles,
-          preventOverlap: true,
-          cost: CONSTANTS.ECONOMY.ROCKETEER_COST || 300,
-        }
-      );
-
-      // Create engineer units
-      engineerUnits = unitFactory.createMultipleUnits(Engineer, NUM_ENGINEERS, {
-        validTiles: grassTiles,
-        preventOverlap: true,
-        cost: CONSTANTS.ECONOMY.ENGINEER_COST || 250,
-      });
-
-      // Create scout units
-      scoutUnits = unitFactory.createMultipleUnits(Scout, NUM_SCOUTS, {
-        validTiles: grassTiles,
-        preventOverlap: true,
-        cost: CONSTANTS.ECONOMY.SCOUT_COST || 150,
-      });
-
-      // Create sniper units
-      sniperUnits = unitFactory.createMultipleUnits(Sniper, NUM_SNIPERS, {
-        validTiles: grassTiles,
-        preventOverlap: true,
-        cost: CONSTANTS.ECONOMY.SNIPER_COST || 350,
-      });
-
-      // Add all specialized units to current player
-      if (currentPlayer) {
-        [rocketeerUnits, engineerUnits, scoutUnits, sniperUnits].forEach(
-          (unitArray) => {
-            if (unitArray && unitArray.length > 0) {
-              unitArray.forEach((unit) => {
-                if (unit) currentPlayer.addUnit(unit);
-              });
-            }
-          }
-        );
-      }
-
-      // Create a builder for each player
+      // Create a builder for each player (only 1 builder per player at start)
       createBuildersForPlayers(scene, grassTiles);
     } catch (err) {
       console.error("Error creating game objects:", err);
@@ -548,7 +475,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function createBuildersForPlayers(scene, validTiles) {
     if (!scene.players || !validTiles) return;
 
-    // Create a builder for each player
+    // Create a single builder for each player
     scene.players.forEach((player, index) => {
       if (!player) return;
 
@@ -569,7 +496,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (builder) {
         // Add the builder to the player
         player.addBuilder(builder);
-        console.log(`Builder created for Player ${player.id}`);
+        console.log(`Initial builder created for Player ${player.id}`);
       }
     });
   }

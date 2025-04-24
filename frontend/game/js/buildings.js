@@ -198,6 +198,13 @@ class Building {
 
       // Prevent event propagation
       pointer.stopPropagation();
+
+      // Show building-specific UI
+      if (this.type === "barracks") {
+        this.showBarracksUI();
+      } else if (this.type === "factory") {
+        this.showFactoryUI();
+      }
     });
 
     // Add hover tooltip
@@ -787,6 +794,242 @@ class Building {
       this.builderCountText.destroy();
     }
     this.hideBarracksUI();
+  }
+
+  // Show UI for vehicle production from factory
+  showFactoryUI() {
+    // Hide any existing UI first
+    this.hideFactoryUI();
+
+    console.log("Creating factory UI"); // Debug log
+
+    // Create factory production UI
+    this.factoryUI = [];
+
+    // Get owner color for button styling, default to gray if no owner
+    const buttonColor = this.owner ? this.owner.color : 0x555555;
+    const buttonBorderColor = 0x000000;
+
+    // Position the UI to the side instead of directly below the building
+    const uiX = this.x + this.size * 2.5;
+    const uiY = this.y - this.size * 1.5;
+
+    // Background panel - more transparent and larger to fit more units
+    const panel = this.scene.add.rectangle(
+      uiX,
+      uiY,
+      this.size * 4,
+      this.size * 5, // Height for vehicle buttons
+      0x000000,
+      0.5 // More transparent
+    );
+    panel.setOrigin(0.5, 0);
+    panel.setDepth(100);
+    panel.setStrokeStyle(1, 0xffffff, 0.3); // Add subtle border
+    this.factoryUI.push(panel);
+
+    // Title with building icon
+    const title = this.scene.add.text(uiX, uiY + this.size * 0.3, "Factory", {
+      fontSize: "14px",
+      fontStyle: "bold",
+      fill: "#FFFFFF",
+    });
+    title.setOrigin(0.5, 0);
+    title.setDepth(101);
+    this.factoryUI.push(title);
+
+    // Separator line
+    const separator = this.scene.add.graphics();
+    separator.lineStyle(1, 0xffffff, 0.5);
+    separator.beginPath();
+    separator.moveTo(uiX - this.size * 1.8, uiY + this.size * 0.8);
+    separator.lineTo(uiX + this.size * 1.8, uiY + this.size * 0.8);
+    separator.strokePath();
+    separator.setDepth(101);
+    this.factoryUI.push(separator);
+
+    // Production label
+    const productionLabel = this.scene.add.text(
+      uiX,
+      uiY + this.size * 1.1,
+      "Vehicle Production",
+      {
+        fontSize: "12px",
+        fill: "#FFFFFF",
+      }
+    );
+    productionLabel.setOrigin(0.5, 0);
+    productionLabel.setDepth(101);
+    this.factoryUI.push(productionLabel);
+
+    // Vehicle button creation helper function
+    const createVehicleButton = (vehicleType, yOffset, cost) => {
+      const displayName =
+        vehicleType.charAt(0).toUpperCase() + vehicleType.slice(1);
+      const btn = this.scene.add.rectangle(
+        uiX,
+        uiY + yOffset,
+        this.size * 3,
+        this.size * 0.8,
+        buttonColor,
+        0.8
+      );
+      btn.setOrigin(0.5, 0);
+      btn.setDepth(101);
+      btn.setInteractive({ useHandCursor: true });
+      btn.on("pointerdown", () => {
+        console.log(`${displayName} button clicked`);
+        this.produceVehicle(vehicleType);
+      });
+      btn.on("pointerover", () => {
+        btn.setAlpha(1);
+      });
+      btn.on("pointerout", () => {
+        btn.setAlpha(0.8);
+      });
+      this.factoryUI.push(btn);
+
+      // Button border
+      const btnBorder = this.scene.add.graphics();
+      btnBorder.lineStyle(2, buttonBorderColor, 0.5);
+      btnBorder.strokeRect(btn.x - btn.width / 2, btn.y, btn.width, btn.height);
+      btnBorder.setDepth(101);
+      this.factoryUI.push(btnBorder);
+
+      // Button text
+      const btnText = this.scene.add.text(
+        uiX,
+        uiY + yOffset + this.size * 0.2,
+        `${displayName} - ${cost}G`,
+        {
+          fontSize: "10px",
+          fill: "#FFFFFF",
+          align: "center",
+        }
+      );
+      btnText.setOrigin(0.5, 0);
+      btnText.setDepth(102);
+      this.factoryUI.push(btnText);
+    };
+
+    // Create vehicle buttons
+    createVehicleButton("tank", this.size * 1.8, CONSTANTS.ECONOMY.TANK_COST);
+    // Add more vehicle types as needed
+    // createVehicleButton("artilleryTank", this.size * 2.8, 400);
+    // createVehicleButton("transportVehicle", this.size * 3.8, 300);
+
+    // Close button (X in the corner)
+    const closeBtn = this.scene.add.text(
+      uiX + this.size * 1.8,
+      uiY + this.size * 0.3,
+      "X",
+      {
+        fontSize: "12px",
+        fontStyle: "bold",
+        fill: "#FFFFFF",
+      }
+    );
+    closeBtn.setOrigin(0.5, 0);
+    closeBtn.setDepth(101);
+    closeBtn.setInteractive({ useHandCursor: true });
+    closeBtn.on("pointerdown", () => {
+      this.hideFactoryUI();
+    });
+    this.factoryUI.push(closeBtn);
+  }
+
+  // Hide factory production UI
+  hideFactoryUI() {
+    if (this.factoryUI && this.factoryUI.length > 0) {
+      this.factoryUI.forEach((element) => {
+        if (element) element.destroy();
+      });
+      this.factoryUI = [];
+    }
+  }
+
+  // Produce a vehicle from factory
+  produceVehicle(vehicleType) {
+    if (!this.owner) return;
+
+    let cost = 0;
+    let unitFactory = this.scene.unitFactory;
+
+    if (!unitFactory) {
+      console.error("Unit factory not found!");
+      return;
+    }
+
+    // Determine cost based on vehicle type
+    switch (vehicleType) {
+      case "tank":
+        cost = CONSTANTS.ECONOMY.TANK_COST;
+        break;
+      // Add more vehicle types as needed
+      // case "artilleryTank":
+      //   cost = 400; // Artillery tank cost
+      //   break;
+      // case "transportVehicle":
+      //   cost = 300; // Transport vehicle cost
+      //   break;
+      default:
+        console.error(`Unknown vehicle type: ${vehicleType}`);
+        return;
+    }
+
+    // Check if player can afford it
+    if (!this.owner.canAfford(cost)) {
+      // Show error message
+      if (this.scene.shop) {
+        this.scene.shop.showMessage(`Cannot afford ${vehicleType}!`);
+      }
+      return;
+    }
+
+    // Charge the player
+    this.owner.spendGold(cost);
+
+    // Create vehicle near factory
+    const validTiles = this.scene.hexTiles.filter(
+      (hex) =>
+        hex.color === CONSTANTS.COLORS.GRASS &&
+        Math.sqrt(Math.pow(hex.x - this.x, 2) + Math.pow(hex.y - this.y, 2)) <
+          200
+    );
+
+    if (validTiles.length === 0) {
+      console.error("No valid tiles found near factory!");
+      return;
+    }
+
+    // Create the vehicle
+    let createdVehicle = null;
+
+    switch (vehicleType) {
+      case "tank":
+        createdVehicle = unitFactory.createUnit(Tank, {
+          validTiles: validTiles,
+          cost: CONSTANTS.ECONOMY.TANK_COST,
+        });
+        break;
+      // Add more vehicle types as needed
+      // case "artilleryTank":
+      //   // Would need to create a new vehicle class
+      //   break;
+      // case "transportVehicle":
+      //   // Would need to create a new vehicle class
+      //   break;
+    }
+
+    // Add the vehicle to the player's units
+    if (createdVehicle) {
+      this.owner.addUnit(createdVehicle);
+
+      // Show success message
+      if (this.scene.shop) {
+        this.scene.shop.showMessage(`${vehicleType} created!`);
+      }
+    }
   }
 }
 
