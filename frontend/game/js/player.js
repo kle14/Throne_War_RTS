@@ -99,6 +99,13 @@ class Player {
   }
 
   update() {
+    // Update regular units
+    if (this.units && this.units.length > 0) {
+      this.units.forEach((unit) => {
+        if (unit) unit.update();
+      });
+    }
+
     // Update builders
     if (this.builders && this.builders.length > 0) {
       this.builders.forEach((builder) => {

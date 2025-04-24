@@ -9,6 +9,14 @@ class Infantry extends Base_Character {
 
     // Call parent constructor which handles most initialization
     super(scene, infantryProps, x, y);
+
+    // Ensure the hit area is interactive
+    if (this.hitArea) {
+      this.hitArea.setInteractive();
+    }
+
+    // The setupSelectionEvents is already called in the Base_Character constructor
+    // and again in unitFactory.createUnit - no need to call it here
   }
 
   // Override the draw method to create infantry-specific appearance

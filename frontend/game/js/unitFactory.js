@@ -63,9 +63,10 @@ class UnitFactory {
     // Create the unit
     const unit = new UnitClass(this.scene, x + offsetX, y + offsetY, unitProps);
 
-    // Set up event handlers
-    if (typeof unit.setupEvents === "function") {
-      unit.setupEvents();
+    // Ensure the hit area is interactive, but don't set up events that
+    // are already set up in the constructors
+    if (unit.hitArea) {
+      unit.hitArea.setInteractive();
     }
 
     console.log(`Created ${UnitClass.name} at position:`, x, y);
@@ -163,12 +164,12 @@ class UnitFactory {
     // Get the chosen tile
     const chosenTile = validTiles[tileIndex % validTiles.length];
 
-    // Create the builder at the tile position
-    const builder = new Builder(this.scene, chosenTile.x, chosenTile.y);
+    // Create the builder at the tile position (using Engineer class instead of Builder)
+    const builder = new Engineer(this.scene, chosenTile.x, chosenTile.y);
 
-    // Set up event handlers
-    if (typeof builder.setupEvents === "function") {
-      builder.setupEvents();
+    // Ensure hit area is interactive, but don't duplicate event setup
+    if (builder.hitArea) {
+      builder.hitArea.setInteractive();
     }
 
     console.log(`Created Builder at position:`, chosenTile.x, chosenTile.y);
