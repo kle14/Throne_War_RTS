@@ -63,9 +63,10 @@ class UnitFactory {
     // Create the unit
     const unit = new UnitClass(this.scene, x + offsetX, y + offsetY, unitProps);
 
-    // Set up event handlers
-    if (typeof unit.setupEvents === "function") {
-      unit.setupEvents();
+    // Ensure the hit area is interactive, but don't set up events that
+    // are already set up in the constructors
+    if (unit.hitArea) {
+      unit.hitArea.setInteractive();
     }
 
     console.log(`Created ${UnitClass.name} at position:`, x, y);
@@ -135,6 +136,45 @@ class UnitFactory {
     }
 
     return closestTile;
+  }
+
+  // Create a builder unit
+  createBuilder(options = {}) {
+    const validTiles =
+      options.validTiles ||
+      this.scene.hexTiles.filter((hex) => hex.color === CONSTANTS.COLORS.GRASS);
+
+    if (validTiles.length === 0) {
+      console.error("No valid tiles found to place builder!");
+      return null;
+    }
+
+    let tileIndex = 0;
+
+    // Use provided position if available
+    if (options.position) {
+      if (options.position.tileIndex !== undefined) {
+        tileIndex = options.position.tileIndex;
+      }
+    } else {
+      // Otherwise, pick a random position
+      tileIndex = Math.floor(Math.random() * validTiles.length);
+    }
+
+    // Get the chosen tile
+    const chosenTile = validTiles[tileIndex % validTiles.length];
+
+    // Create the builder at the tile position (using Engineer class instead of Builder)
+    const builder = new Engineer(this.scene, chosenTile.x, chosenTile.y);
+
+    // Ensure hit area is interactive, but don't duplicate event setup
+    if (builder.hitArea) {
+      builder.hitArea.setInteractive();
+    }
+
+    console.log(`Created Builder at position:`, chosenTile.x, chosenTile.y);
+
+    return builder;
   }
 }
 

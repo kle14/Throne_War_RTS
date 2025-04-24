@@ -7,6 +7,7 @@
  * - Selection
  * - Hex grid navigation
  * - Event handling
+ * - Player ownership
  */
 class Mobile_Object {
   /**
@@ -32,10 +33,13 @@ class Mobile_Object {
     this.isSelected = false;
     this.objectProps = objectProps;
     this.type = objectProps.type || "generic";
+    this.owner = null; // Initialize owner as null
+    this.cost = objectProps.cost || 0; // Cost of the unit
 
     // Selection circle (invisible by default)
     this.selectionCircle = scene.add.graphics();
     this.selectionCircle.setVisible(false);
+    this.selectionCircle.setDepth(5); // Set depth between path (1) and sprites (10)
 
     // Path-related properties
     this.currentPath = [];
@@ -54,6 +58,42 @@ class Mobile_Object {
 
     // Find closest hex to set initial position
     this.findAndSetInitialHex(x, y);
+  }
+
+  /**
+   * Set the owner of this unit
+   * @param {Player} player - The player who owns this unit
+   */
+  setOwner(player) {
+    if (!player) return;
+
+    this.owner = player;
+
+    // If this unit has a sprite, tint it with the player's color
+    if (this.sprite && player.color) {
+      try {
+        this.sprite.setTint(player.color);
+      } catch (err) {
+        console.error("Error setting sprite tint:", err);
+      }
+    }
+  }
+
+  /**
+   * Get the owner of this unit
+   * @returns {Player} The player who owns this unit
+   */
+  getOwner() {
+    return this.owner;
+  }
+
+  /**
+   * Check if this unit is owned by the specified player
+   * @param {Player} player - The player to check
+   * @returns {boolean} True if the unit is owned by the player
+   */
+  isOwnedBy(player) {
+    return this.owner && this.owner.id === player.id;
   }
 
   /**
@@ -76,6 +116,9 @@ class Mobile_Object {
     let closestDistance = Number.MAX_VALUE;
 
     for (const hex of hexes) {
+      // Only consider valid tiles for movement
+      if (!this.isValidMovementTile(hex)) continue;
+
       const distance = Math.sqrt(
         Math.pow(hex.x - x, 2) + Math.pow(hex.y - y, 2)
       );
@@ -155,20 +198,51 @@ class Mobile_Object {
     const clickedHex = this.findHexTileAt(x, y);
 
     if (clickedHex && this.isValidMovementTarget(clickedHex)) {
+      // When clicking a new destination, we need to use the current actual position
+      // rather than the stored hex position which might not be up-to-date during movement
+      const currentPosition = {
+        x: this.sprite.x,
+        y: this.sprite.y,
+      };
+
+      // Find the closest hex to the current position for accurate pathfinding
+      const startHex = this.findClosestHex(
+        currentPosition.x,
+        currentPosition.y
+      );
+
+      if (!startHex) {
+        console.error("Could not find a valid starting hex for pathfinding");
+        return;
+      }
+
+      // Cancel any current movement and clear existing path
+      this.isMoving = false;
+      this.currentPath = [];
+      this.pathVisualizer.clear();
+
       // Calculate path from current position to target
       const path = this.pathFinder.findPath(
-        this.currentHex,
+        startHex,
         clickedHex,
         this.isValidMovementTile.bind(this)
       );
 
       if (path && path.length > 0) {
+        // Update current position to ensure we're starting from the right place
+        this.currentHex = startHex;
+
+        // Set the new path
         this.currentPath = path;
         this.pathVisualizer.drawPath(this.sprite.x, this.sprite.y, path);
 
         // Move to the first point in path
         this.moveToNextPathPoint();
+      } else {
+        console.log("No valid path found to destination");
       }
+    } else {
+      console.log("Invalid movement target or no hex at click location");
     }
   }
 
@@ -194,6 +268,12 @@ class Mobile_Object {
   select() {
     this.isSelected = true;
     this.drawSelectionCircle();
+
+    // Make the path fully visible if it exists
+    if (this.pathVisualizer && this.currentPath.length > 0) {
+      this.pathVisualizer.setTransparent(false);
+    }
+
     console.log(this.type + " selected");
   }
 
@@ -203,6 +283,12 @@ class Mobile_Object {
   deselect() {
     this.isSelected = false;
     this.selectionCircle.setVisible(false);
+
+    // Make the path more transparent if it exists
+    if (this.pathVisualizer && this.currentPath.length > 0) {
+      this.pathVisualizer.setTransparent(true);
+    }
+
     console.log(this.type + " deselected");
   }
 
@@ -243,6 +329,18 @@ class Mobile_Object {
 
     // Get the next point from path
     const nextPoint = this.currentPath[0];
+
+    // Verify the next point is valid (double-check)
+    if (!this.isValidMovementTile(nextPoint)) {
+      console.error(
+        "Invalid movement tile detected in path, canceling movement"
+      );
+      this.currentPath = [];
+      this.isMoving = false;
+      this.pathVisualizer.clear();
+      return;
+    }
+
     this.currentPath.splice(0, 1); // Remove the first point
 
     // Set target position
@@ -315,6 +413,16 @@ class Mobile_Object {
         if (this.isSelected) {
           this.selectionCircle.x = this.sprite.x;
           this.selectionCircle.y = this.sprite.y;
+        }
+
+        // Continuously update path visualization every frame to ensure
+        // the buffer zone moves with the troop
+        if (this.currentPath.length > 0) {
+          this.pathVisualizer.updatePathProgress(
+            this.sprite.x,
+            this.sprite.y,
+            this.currentPath
+          );
         }
       }
     }

@@ -15,8 +15,9 @@ class Base_Character extends Mobile_Object {
     // Draw the character's appearance
     this.draw();
 
-    // Setup the events
+    // Setup both movement and selection events
     this.setupEvents();
+    this.setupSelectionEvents();
   }
 
   // Draw the character - to be implemented by subclasses
@@ -35,5 +36,22 @@ class Base_Character extends Mobile_Object {
     // Default appearance
     this.sprite.fillStyle(0x888888, 1); // Default gray color
     this.sprite.fillCircle(0, 0, this.bodyRadius);
+  }
+
+  // Set up selection events specifically
+  setupSelectionEvents() {
+    // Object selection handler
+    this.hitArea.on("pointerdown", (pointer) => {
+      console.log(this.type + " clicked");
+      this.select();
+
+      // Tell the scene this object was selected
+      if (this.scene.onUnitSelected) {
+        this.scene.onUnitSelected(this);
+      }
+
+      // Prevent event propagation
+      pointer.stopPropagation();
+    });
   }
 }
