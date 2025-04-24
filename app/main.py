@@ -1,9 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 import os
 
-app = FastAPI(title="RTS Game API")
+app = FastAPI(title="Throne Wars RTS API")
 
 # Configure CORS
 app.add_middleware(
@@ -15,15 +17,27 @@ app.add_middleware(
 )
 
 # Get the absolute path to the frontend directory
-frontend_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
+current_dir = os.path.dirname(os.path.abspath(__file__))
+frontend_path = os.path.join(os.path.dirname(current_dir), "frontend")
 
-# Mount the frontend directory to serve static files
+# Mount static directories
 app.mount("/game", StaticFiles(directory=os.path.join(frontend_path, "game"), html=True), name="game")
-app.mount("/", StaticFiles(directory=os.path.join(frontend_path, "menu"), html=True), name="menu")
+app.mount("/menu/assets", StaticFiles(directory=os.path.join(frontend_path, "menu", "assets")), name="menu_assets")
+app.mount("/menu/css", StaticFiles(directory=os.path.join(frontend_path, "menu", "css")), name="menu_css")
+app.mount("/menu/js", StaticFiles(directory=os.path.join(frontend_path, "menu", "js")), name="menu_js")
+app.mount("/menu", StaticFiles(directory=os.path.join(frontend_path, "menu"), html=True), name="menu")
+
+# Setup templates
+templates = Jinja2Templates(directory=os.path.join(frontend_path))
+
+@app.get("/")
+async def root():
+    # Redirect to the menu page
+    return RedirectResponse(url="/menu/menu.html")
 
 @app.get("/api")
-async def root():
-    return {"message": "Welcome to RTS Game API"}
+async def api_root():
+    return {"message": "Welcome to Throne Wars RTS API"}
 
 @app.get("/api/health")
 async def health_check():
