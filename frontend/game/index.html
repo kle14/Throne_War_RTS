@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <title>Hexagonal Map - Phaser Game</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏰</text></svg>"
+    />
     <style>
       body {
         margin: 0;
@@ -18,37 +22,17 @@
         padding: 0;
       }
     </style>
+    <!-- Load browser shim to fix "browser is not defined" errors -->
+    <script src="./utils/browser-shim.js"></script>
+
     <!-- Load Phaser framework -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 
-    <!-- Load core game files -->
-    <script src="./js/constants.js"></script>
+    <!-- Load compatibility layer to support both old and new code structure -->
+    <script type="module" src="./utils/compat.js"></script>
 
-    <!-- Load object hierarchy (order matters for inheritance) -->
-    <script src="./js/Objects/mobile_object.js"></script>
-    <script src="./js/Objects/Character/constants.js"></script>
-    <script src="./js/Objects/Character/base_character.js"></script>
-    <script src="./js/Objects/Character/infantry.js"></script>
-    <script src="./js/Objects/Character/rocketeer.js"></script>
-    <script src="./js/Objects/Character/engineer.js"></script>
-    <script src="./js/Objects/Character/scout.js"></script>
-    <script src="./js/Objects/Character/sniper.js"></script>
-    <script src="./js/Objects/Character/builder.js"></script>
-
-    <!-- Load vehicle classes -->
-    <script src="./js/Objects/Land_Vehicle/tank.js"></script>
-
-    <!-- Load game mechanics -->
-    <script src="./js/pathfinding.js"></script>
-    <script src="./js/pathVisualizer.js"></script>
-    <script src="./js/unitFactory.js"></script>
-    <script src="./js/economy.js"></script>
-    <script src="./js/player.js"></script>
-    <script src="./js/buildings.js"></script>
-    <script src="./js/shop.js"></script>
-
-    <!-- Load main game file -->
-    <script src="./js/game.js"></script>
+    <!-- Load main game file as a module -->
+    <script type="module" src="./core/game.js"></script>
   </head>
 
   <body>
