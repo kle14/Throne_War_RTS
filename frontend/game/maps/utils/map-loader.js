@@ -263,14 +263,14 @@ class MapLoader {
    * @param {number} y - Y coordinate of the hex
    */
   addOilResourceIndicator(scene, x, y) {
-    // Create a drilling rig symbol that suggests resources
+    // Create an oil derrick-like symbol
     const graphics = scene.add.graphics();
 
-    // Use oil color from constants for the rig
+    // Use oil color from constants
     graphics.fillStyle(CONSTANTS.COLORS.RESOURCES.OIL, 1);
     graphics.lineStyle(2, 0x000000, 0.9);
 
-    // Draw rig platform
+    // Draw oil rig platform
     const rigSize = CONSTANTS.HEX_SIZE / 3;
     const platformHeight = rigSize / 4;
 
@@ -301,8 +301,8 @@ class MapLoader {
     graphics.fillRect(x - rigSize / 2, y - rigSize / 2, rigSize, rigSize / 6);
     graphics.strokeRect(x - rigSize / 2, y - rigSize / 2, rigSize, rigSize / 6);
 
-    // Add a hint of gold (to show these are valuable spots)
-    graphics.fillStyle(0xffd700, 0.3);
+    // Add a hint of oil (blue-black with opacity)
+    graphics.fillStyle(0x0033aa, 0.3);
     graphics.fillCircle(x, y + rigSize / 1.5, rigSize / 1.2);
   }
 

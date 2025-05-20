@@ -106,9 +106,13 @@ export class Building {
 
       // If not a blueprint, add resource indicators
       if (!this.isBlueprint) {
-        // Gold coin indicator (centered)
+        // Oil drop (black)
+        this.sprite.fillStyle(0x000000, 1);
+        this.sprite.fillCircle(-size / 3, size / 2, size / 6);
+
+        // Gold coin (gold)
         this.sprite.fillStyle(0xffd700, 1);
-        this.sprite.fillCircle(0, size / 2, size / 5);
+        this.sprite.fillCircle(size / 3, size / 2, size / 6);
 
         // Reset fill style to main color for border
         this.sprite.fillStyle(color, 1);
@@ -613,11 +617,18 @@ export class Building {
           towerWidth * 0.5
         );
 
-        // Gold coin indicator (centered)
-        this.sprite.fillStyle(0xffd700, 1);
-        this.sprite.fillCircle(0, size / 2, size / 5);
+        // Resource indicators
+        // Oil drop (black)
+        this.sprite.fillStyle(0x000000, 1);
+        this.sprite.fillCircle(-size / 3, size / 2, size / 6);
         this.sprite.lineStyle(1, 0x000000, 1);
-        this.sprite.strokeCircle(0, size / 2, size / 5);
+        this.sprite.strokeCircle(-size / 3, size / 2, size / 6);
+
+        // Gold coin (gold)
+        this.sprite.fillStyle(0xffd700, 1);
+        this.sprite.fillCircle(size / 3, size / 2, size / 6);
+        this.sprite.lineStyle(1, 0x000000, 1);
+        this.sprite.strokeCircle(size / 3, size / 2, size / 6);
       }
     }
   }
@@ -730,7 +741,6 @@ export class Building {
     }
 
     const goldProductionRate = this.buildingData.productionRate || 150;
-
     console.log(`Activating oil rig: +${goldProductionRate} gold/min`);
 
     // Add gold production rate to player's economy

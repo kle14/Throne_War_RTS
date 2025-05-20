@@ -89,78 +89,12 @@ export class EconomyUI {
       this.goldRateText.setScrollFactor(0);
       this.goldRateText.setDepth(100);
 
-      // Create background for oil amount
-      this.oilBackground = this.scene.add.rectangle(
-        x + 15,
-        y + 82,
-        200,
-        30,
-        0x000000,
-        0.5
-      );
-      this.oilBackground.setOrigin(0, 0);
-      this.oilBackground.setScrollFactor(0);
-      this.oilBackground.setDepth(100);
-
-      // Oil icon
-      this.oilIcon = this.scene.add.text(x, y + 70, "🛢️", {
-        fontSize: "24px",
-      });
-      this.oilIcon.setScrollFactor(0);
-      this.oilIcon.setDepth(100);
-
-      // Oil amount text
-      this.oilText = this.scene.add.text(
-        x + 30,
-        y + 70,
-        `Oil: ${this.economy ? this.economy.getOil() : 0}`,
-        {
-          fontSize: "18px",
-          fill: "#0077be", // Blue color for oil
-          fontStyle: "bold",
-        }
-      );
-      this.oilText.setScrollFactor(0);
-      this.oilText.setDepth(100);
-
-      // Create background for oil production rate display
-      this.oilRateBackground = this.scene.add.rectangle(
-        x + 15,
-        y + 117,
-        200,
-        26,
-        0x000000,
-        0.5
-      );
-      this.oilRateBackground.setOrigin(0, 0);
-      this.oilRateBackground.setScrollFactor(0);
-      this.oilRateBackground.setDepth(100);
-
-      // Oil per minute text
-      this.oilRateText = this.scene.add.text(
-        x + 30,
-        y + 105,
-        `+${this.economy ? this.economy.getOilProductionRate() : 0}/min`,
-        {
-          fontSize: "16px",
-          fill: "#90EE90", // Light green
-          fontStyle: "bold",
-        }
-      );
-      this.oilRateText.setScrollFactor(0);
-      this.oilRateText.setDepth(100);
-
       // Make sure all UI elements are visible
       this.uiBackground.setVisible(true);
       this.goldIcon.setVisible(true);
       this.goldText.setVisible(true);
       this.goldRateBackground.setVisible(true);
       this.goldRateText.setVisible(true);
-      this.oilBackground.setVisible(true);
-      this.oilIcon.setVisible(true);
-      this.oilText.setVisible(true);
-      this.oilRateBackground.setVisible(true);
-      this.oilRateText.setVisible(true);
 
       console.log("EconomyUI elements created");
     } catch (error) {
@@ -193,23 +127,6 @@ export class EconomyUI {
       if (this.goldRateText && !this.goldRateText.visible) {
         this.goldRateText.setVisible(true);
       }
-
-      // Ensure UI elements remain visible (oil)
-      if (this.oilBackground && !this.oilBackground.visible) {
-        this.oilBackground.setVisible(true);
-      }
-      if (this.oilIcon && !this.oilIcon.visible) {
-        this.oilIcon.setVisible(true);
-      }
-      if (this.oilText && !this.oilText.visible) {
-        this.oilText.setVisible(true);
-      }
-      if (this.oilRateBackground && !this.oilRateBackground.visible) {
-        this.oilRateBackground.setVisible(true);
-      }
-      if (this.oilRateText && !this.oilRateText.visible) {
-        this.oilRateText.setVisible(true);
-      }
     } catch (error) {
       console.error("Error in EconomyUI update:", error);
     }
@@ -224,12 +141,6 @@ export class EconomyUI {
     }
     if (this.goldRateText && this.economy) {
       this.goldRateText.setText(`+${this.economy.getGoldProductionRate()}/min`);
-    }
-    if (this.oilText && this.economy) {
-      this.oilText.setText(`Oil: ${Math.floor(this.economy.getOil())}`);
-    }
-    if (this.oilRateText && this.economy) {
-      this.oilRateText.setText(`+${this.economy.getOilProductionRate()}/min`);
     }
   }
 
@@ -251,21 +162,6 @@ export class EconomyUI {
     }
     if (this.goldRateBackground) {
       this.goldRateBackground.destroy();
-    }
-    if (this.oilText) {
-      this.oilText.destroy();
-    }
-    if (this.oilIcon) {
-      this.oilIcon.destroy();
-    }
-    if (this.oilBackground) {
-      this.oilBackground.destroy();
-    }
-    if (this.oilRateText) {
-      this.oilRateText.destroy();
-    }
-    if (this.oilRateBackground) {
-      this.oilRateBackground.destroy();
     }
   }
 }

@@ -525,13 +525,14 @@ export class Shop {
           towerWidth * 0.5
         );
 
-        // Add gold coin indicator
+        // Add small icon indicators for resources
         const iconGraphics = this.scene.add.graphics();
+        // Oil drop (black)
+        iconGraphics.fillStyle(0x000000, 1);
+        iconGraphics.fillCircle(-size / 3, size / 2, size / 6);
         // Gold coin (gold)
         iconGraphics.fillStyle(0xffd700, 1);
-        iconGraphics.fillCircle(0, size / 2, size / 5);
-        iconGraphics.lineStyle(1, 0x000000, 1);
-        iconGraphics.strokeCircle(0, size / 2, size / 5);
+        iconGraphics.fillCircle(size / 3, size / 2, size / 6);
 
         // Add to container
         this.buildingPreview.add(iconGraphics);

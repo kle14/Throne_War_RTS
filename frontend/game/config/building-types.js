@@ -45,14 +45,14 @@ export const BUILDING_TYPES = {
   },
   oilRig: {
     name: "Oil Rig",
-    description: "Extracts valuable minerals from underwater deposits",
+    description: "Extracts gold from underwater deposits",
     cost: 500,
     color: 0x333333, // Dark gray/black
     buildTime: 40, // seconds
     healthPoints: 350,
-    productionRate: 150, // Gold per minute (increased to compensate for removal of oil)
+    productionRate: 150, // Gold per minute (increased since it's now the only resource)
     validTerrainTypes: ["water"], // Can ONLY be built on water
-    requiresResource: "oil", // Requires an oil resource on the hex
+    requiresResource: "gold", // Changed from oil to gold
   },
 };
 
