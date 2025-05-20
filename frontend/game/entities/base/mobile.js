@@ -347,7 +347,8 @@ export class Mobile extends Entity {
    * Default implementation, should be overridden by subclasses
    */
   isValidMovementTarget(hex) {
-    return hex && hex.color === CONSTANTS.COLORS.GRASS;
+    // Use the type property instead of color
+    return hex && hex.type === "land" && hex.passable;
   }
 
   /**
@@ -362,14 +363,13 @@ export class Mobile extends Entity {
         return false;
       }
 
-      if (!hex.hasOwnProperty("color")) {
-        console.log("isValidMovementTile: hex has no color property");
+      if (!hex.hasOwnProperty("type")) {
+        console.log("isValidMovementTile: hex has no type property");
         return false;
       }
 
-      // Default implementation - check if it's grass
-      const isValid = hex.color === CONSTANTS.COLORS.GRASS;
-      return isValid;
+      // Default implementation for land units - check if it's land and passable
+      return hex.type === "land" && hex.passable;
     } catch (error) {
       console.error("Error in isValidMovementTile:", error);
       return false;
@@ -669,6 +669,32 @@ export class Mobile extends Entity {
     } catch (error) {
       console.error("Error in Mobile draw method:", error);
     }
+  }
+
+  /**
+   * Check if a hex can be moved to (valid terrain)
+   * @param {Object} hex - The hex to check
+   * @returns {boolean} - True if can move to this hex
+   */
+  isValidHex(hex) {
+    // Default implementation checks for land terrain and no other entity
+    // Override in subclasses for different movement rules (e.g., naval units)
+    return hex && hex.type === "land" && hex.passable;
+  }
+
+  /**
+   * Check if the mobile object can move to a specific position
+   * @param {number} x - Target x coordinate
+   * @param {number} y - Target y coordinate
+   * @returns {boolean} - True if the target is valid
+   */
+  canMoveTo(x, y) {
+    // Find the nearest hex to the target position
+    const hex = this.findNearestHex(x, y);
+    if (!hex) return false;
+
+    // Check if the hex is valid for this unit type
+    return this.isValidHex(hex) && !this.isHexOccupied(hex);
   }
 }
 

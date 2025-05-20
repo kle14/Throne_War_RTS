@@ -11,6 +11,7 @@ export const BUILDING_TYPES = {
     color: 0x8b4513, // Brown
     buildTime: 30, // seconds (increased for slower building)
     healthPoints: 500,
+    validTerrainTypes: ["land"], // Can only be built on land
   },
   goldMine: {
     name: "Gold Mine",
@@ -20,6 +21,7 @@ export const BUILDING_TYPES = {
     buildTime: 45, // seconds (increased for slower building)
     healthPoints: 400,
     productionRate: 100, // Gold per minute
+    validTerrainTypes: ["land"], // Can only be built on land
   },
   factory: {
     name: "Factory",
@@ -28,6 +30,7 @@ export const BUILDING_TYPES = {
     color: 0x708090, // Slate gray
     buildTime: 60, // seconds (increased for slower building)
     healthPoints: 600,
+    validTerrainTypes: ["land"], // Can only be built on land
   },
   turret: {
     name: "Turret",
@@ -38,6 +41,18 @@ export const BUILDING_TYPES = {
     healthPoints: 300,
     damage: 50,
     range: 200,
+    validTerrainTypes: ["land"], // Can only be built on land
+  },
+  oilRig: {
+    name: "Oil Rig",
+    description: "Extracts valuable minerals from underwater deposits",
+    cost: 500,
+    color: 0x333333, // Dark gray/black
+    buildTime: 40, // seconds
+    healthPoints: 350,
+    productionRate: 150, // Gold per minute (increased to compensate for removal of oil)
+    validTerrainTypes: ["water"], // Can ONLY be built on water
+    requiresResource: "oil", // Requires an oil resource on the hex
   },
 };
 

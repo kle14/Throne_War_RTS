@@ -11,6 +11,8 @@ import { EconomyUI } from "../systems/economy/economy-ui.js";
 import { Player } from "../systems/players/player.js";
 import { Shop } from "../entities/buildings/shop.js";
 import { Building } from "../entities/buildings/building.js";
+import mapLoader from "../maps/utils/map-loader.js";
+import { mapRegistry, getAvailableMaps } from "../maps/map-registry.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   // Game configuration
@@ -20,11 +22,25 @@ document.addEventListener("DOMContentLoaded", function () {
     height: window.innerHeight,
     backgroundColor: CONSTANTS.COLORS.OCEAN, // Ocean blue background
     parent: "game-container",
-    scene: {
-      preload: preload,
-      create: create,
-      update: update,
-    },
+    disableContextMenu: true,
+    scene: [
+      {
+        key: "GameScene",
+        active: true,
+        visible: true,
+        preload: preload,
+        create: create,
+        update: update,
+      },
+      {
+        key: "UIScene",
+        active: true,
+        visible: true,
+        preload: function () {},
+        create: createUI,
+        update: updateUI,
+      },
+    ],
     input: {
       activePointers: 1,
       mouse: {
@@ -41,6 +57,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Global variables for camera control
   let keys;
+  // Camera controller for smooth movement
+  let cameraController = {
+    targetX: 0,
+    targetY: 0,
+    lerpFactor: 0.2, // Smoothing factor (0-1), adjusted for better responsiveness
+    initialize: function (camera) {
+      this.targetX = camera.scrollX;
+      this.targetY = camera.scrollY;
+    },
+    update: function (camera) {
+      // Smooth camera movement using linear interpolation (lerp)
+      camera.scrollX = Phaser.Math.Linear(
+        camera.scrollX,
+        this.targetX,
+        this.lerpFactor
+      );
+      camera.scrollY = Phaser.Math.Linear(
+        camera.scrollY,
+        this.targetY,
+        this.lerpFactor
+      );
+    },
+  };
 
   // Game objects
   let tank;
@@ -74,6 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let enemyAI;
   let lastEnemySpawnTime = 0;
   let economyUI; // Add reference to the economy UI
+  let currentMapId = "default"; // Default map ID
 
   // Global reference to the deselect hint
   let deselectHint = null;
@@ -107,40 +147,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Function to show a UI hint for deselection
-  function showDeselectHint(scene) {
-    // Remove existing hint if there is one
-    if (deselectHint) {
-      deselectHint.destroy();
-    }
-
-    // Create a new hint in bottom corner
-    deselectHint = scene.add.text(
-      10,
-      scene.cameras.main.height - 40,
-      "Press 'E' to deselect",
-      {
-        fontSize: "14px",
-        backgroundColor: "#000000",
-        padding: { x: 8, y: 5 },
-        fill: "#FFFFFF",
-      }
-    );
-
-    // Make sure hint stays in view at the corner of the camera
-    deselectHint.setScrollFactor(0);
-    deselectHint.setDepth(1000);
-
-    // Add a slight fade animation
-    scene.tweens.add({
-      targets: deselectHint,
-      alpha: { from: 0.7, to: 1 },
-      duration: 800,
-      yoyo: true,
-      repeat: -1,
-    });
-  }
-
   function preload() {
     // Preload any assets we need (if we had images, sounds, etc.)
   }
@@ -149,38 +155,27 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const scene = this;
 
-      // Define your land map - 1 for land, 0 for ocean
-      const landMap = [
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1],
-        [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1],
-        [1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1],
-        [1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1],
-        [1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-      ];
+      // Load the map using the map loader
+      const mapData = mapLoader.loadMap(currentMapId, scene);
+      if (!mapData) {
+        console.error(`Failed to load map: ${currentMapId}`);
+        return;
+      }
 
-      // Store hex tiles information
-      scene.hexTiles = [];
-
-      // Create hexagonal grid with land map
-      createHexagonalGrid(this, landMap);
+      console.log(`Loaded map: ${mapData.name}`);
 
       // Position camera to show the center of the map
       this.cameras.main.centerOn(0, 0);
+      this.cameras.main.setName("mainCamera");
 
-      // Set camera bounds based on grid size
-      const totalWidth = CONSTANTS.GRID_SIZE * CONSTANTS.HEX_WIDTH;
-      const totalHeight = CONSTANTS.GRID_SIZE * CONSTANTS.HEX_HEIGHT * 0.75;
-      this.cameras.main.setBounds(
-        -totalWidth / 2,
-        -totalHeight / 2,
-        totalWidth,
-        totalHeight
-      );
+      // Set a smaller initial zoom level to show more of the map
+      this.cameras.main.setZoom(0.5);
+
+      // Initialize camera controller with current camera position
+      cameraController.initialize(this.cameras.main);
+
+      // Make the main scene accessible from the UI scene
+      this.game.gameScene = this;
 
       // Set up keyboard controls for camera
       keys = this.input.keyboard.addKeys({
@@ -190,6 +185,7 @@ document.addEventListener("DOMContentLoaded", function () {
         right: Phaser.Input.Keyboard.KeyCodes.D,
         deselect: Phaser.Input.Keyboard.KeyCodes.E, // Add E key for deselection
         shift: Phaser.Input.Keyboard.KeyCodes.SHIFT, // Add SHIFT key for multi-selection
+        map: Phaser.Input.Keyboard.KeyCodes.M, // Add M key for showing map info
       });
 
       // Add deselect key handler
@@ -214,6 +210,15 @@ document.addEventListener("DOMContentLoaded", function () {
           selectedUnitsCount: selectedUnits.length,
           hasSelectedBuilding: !!selectedBuilding,
         });
+      });
+
+      // Add map info key handler
+      this.input.keyboard.on("keydown-M", () => {
+        console.log("'M' key pressed - showing map info");
+        if (mapData) {
+          // Instead of directly creating map info, pass it to the UI scene
+          this.scene.get("UIScene").events.emit("showMapInfo", mapData);
+        }
       });
 
       // Make deselectAll available to the scene
@@ -289,10 +294,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Show or hide the deselect hint based on selection state
         if (selectedUnits.length > 0 || selectedBuilding) {
-          showDeselectHint(scene);
-        } else if (deselectHint) {
-          deselectHint.destroy();
-          deselectHint = null;
+          // Tell the UI scene to show deselect hint
+          scene.scene.get("UIScene").events.emit("showDeselectHint");
+        } else {
+          // Tell the UI scene to hide deselect hint
+          scene.scene.get("UIScene").events.emit("hideDeselectHint");
         }
       };
 
@@ -379,7 +385,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
           // Show selection hint if we have units selected
           if (selectedUnits.length > 0) {
-            showDeselectHint(scene);
+            // Tell the UI scene to show deselect hint
+            scene.scene.get("UIScene").events.emit("showDeselectHint");
           }
 
           // Clean up selection box
@@ -414,6 +421,9 @@ document.addEventListener("DOMContentLoaded", function () {
             2
           );
           scene.cameras.main.zoom = newZoom;
+
+          // Reset camera controller target after zoom to prevent jerky movement
+          cameraController.initialize(scene.cameras.main);
         }
       );
 
@@ -421,19 +431,249 @@ document.addEventListener("DOMContentLoaded", function () {
       window.addEventListener("resize", function () {
         game.scale.resize(window.innerWidth, window.innerHeight);
 
-        // Recreate the grid when window is resized
+        // Reload the current map when window is resized
         scene.children.removeAll();
         scene.hexTiles = [];
-        createHexagonalGrid(scene, landMap);
+
+        // Reload map with current ID
+        const reloadedMap = mapLoader.loadMap(currentMapId, scene);
 
         // Recreate game objects
         createGameObjects(scene);
+
+        // Reset camera controller target
+        cameraController.initialize(scene.cameras.main);
+
+        // Notify UI scene about resize
+        scene.scene.get("UIScene").events.emit("windowResized");
       });
 
       console.log("Hexagonal map created with WASD camera controls");
     } catch (err) {
       console.error("Error in create function:", err);
     }
+  }
+
+  // UI Scene's create function
+  function createUI() {
+    const uiScene = this;
+
+    // Make the UI scene accessible globally
+    this.game.uiScene = this;
+
+    // UI scene elements
+    this.mapInfo = null;
+    this.deselectHint = null;
+
+    // This scene's camera never moves or zooms
+    this.cameras.main.setName("uiCamera");
+    this.cameras.main.setScroll(0, 0);
+    this.cameras.main.setZoom(1.0);
+
+    // Get a reference to the game scene for placement operations
+    this.gameScene = this.scene.get("GameScene");
+
+    // Setup event listeners from the main scene
+    this.events.on("showMapInfo", (mapData) => {
+      showMapInfo(uiScene, mapData);
+    });
+
+    this.events.on("showDeselectHint", () => {
+      showDeselectHint(uiScene);
+    });
+
+    this.events.on("hideDeselectHint", () => {
+      if (uiScene.deselectHint) {
+        uiScene.deselectHint.destroy();
+        uiScene.deselectHint = null;
+      }
+    });
+
+    this.events.on("showBarracksUI", (building) => {
+      if (building && building.showBarracksUI) {
+        // We'll implement this if needed
+      }
+    });
+
+    this.events.on("windowResized", () => {
+      // Reposition UI elements if needed
+      if (this.mapInfo) {
+        this.mapInfo.x = this.cameras.main.width / 2;
+        this.mapInfo.y = this.cameras.main.height / 3;
+      }
+
+      if (this.deselectHint) {
+        this.deselectHint.y = this.cameras.main.height - 40;
+      }
+
+      // Resize any other UI elements here
+      if (this.shop && this.shop.onWindowResize) {
+        this.shop.onWindowResize();
+      }
+
+      if (this.economyUI && this.economyUI.onWindowResize) {
+        this.economyUI.onWindowResize();
+      }
+    });
+
+    // Create a special input handler that forwards pointer events to the game scene
+    // This allows building placement to work correctly
+    this.input.on("pointerdown", (pointer) => {
+      // If we're in building placement mode in the shop
+      if (this.shop && this.shop.placementMode) {
+        // Convert pointer position to world position in game scene
+        const worldPoint = this.gameScene.cameras.main.getWorldPoint(
+          pointer.x,
+          pointer.y
+        );
+
+        // Forward the placement attempt to the shop's placement handler
+        if (this.shop.tryPlaceBuilding) {
+          this.shop.tryPlaceBuilding(worldPoint.x, worldPoint.y);
+        }
+      }
+    });
+
+    // Forward pointermove events to update building preview position
+    this.input.on("pointermove", (pointer) => {
+      // If we have a shop and it's in placement mode with a preview
+      if (this.shop && this.shop.placementMode && this.shop.buildingPreview) {
+        // Convert pointer position to world position in the game scene
+        const worldPoint = this.gameScene.cameras.main.getWorldPoint(
+          pointer.x,
+          pointer.y
+        );
+
+        // Update the preview position directly in the game world
+        this.shop.buildingPreview.x = worldPoint.x;
+        this.shop.buildingPreview.y = worldPoint.y;
+
+        // Update the label if it exists
+        if (this.shop.previewLabel) {
+          this.shop.previewLabel.x = worldPoint.x;
+          this.shop.previewLabel.y = worldPoint.y - 40;
+        }
+
+        // Check placement validity and update appearance
+        if (this.shop.canPlaceBuilding) {
+          const canPlace = this.shop.canPlaceBuilding(
+            worldPoint.x,
+            worldPoint.y
+          );
+          this.shop.buildingPreview.alpha = canPlace ? 0.8 : 0.4;
+        }
+      }
+    });
+
+    // Override placeBuilding to use the game scene
+    const originalPlaceBuilding = uiScene.shop.placeBuilding;
+    uiScene.shop.placeBuilding = function (x, y) {
+      // Store current scene temporarily
+      const tempScene = this.scene;
+
+      // Use game scene for actual building placement
+      this.scene = this.gameScene;
+
+      // Call original method
+      const result = originalPlaceBuilding.call(this, x, y);
+
+      // Restore UI scene
+      this.scene = tempScene;
+
+      return result;
+    };
+
+    console.log("UI Scene initialized");
+  }
+
+  // UI Scene's update function
+  function updateUI() {
+    // Update any UI animations or elements that need regular updates
+  }
+
+  // Function to show a UI hint for deselection
+  function showDeselectHint(scene) {
+    // Remove existing hint if there is one
+    if (scene.deselectHint) {
+      scene.deselectHint.destroy();
+    }
+
+    // Create a new hint in bottom corner
+    scene.deselectHint = scene.add.text(
+      10,
+      scene.cameras.main.height - 40,
+      "Press 'E' to deselect",
+      {
+        fontSize: "14px",
+        backgroundColor: "#000000",
+        padding: { x: 8, y: 5 },
+        fill: "#FFFFFF",
+      }
+    );
+
+    // Make sure hint stays in view
+    scene.deselectHint.setDepth(1000);
+
+    // Add a slight fade animation
+    scene.tweens.add({
+      targets: scene.deselectHint,
+      alpha: { from: 0.7, to: 1 },
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+    });
+  }
+
+  // Function to display current map info
+  function showMapInfo(scene, mapData) {
+    // Remove any existing map info text
+    if (scene.mapInfo) {
+      scene.mapInfo.destroy();
+    }
+
+    // Create map info text in the center of the screen
+    const mapInfo = scene.add.text(
+      scene.cameras.main.width / 2,
+      scene.cameras.main.height / 3,
+      `Map: ${mapData.name}`,
+      {
+        fontSize: "24px",
+        backgroundColor: "#00000080",
+        padding: { x: 20, y: 10 },
+        fill: "#FFFFFF",
+      }
+    );
+
+    // Center the text
+    mapInfo.setOrigin(0.5);
+    mapInfo.setDepth(1000);
+
+    // Add fade-in animation
+    mapInfo.setAlpha(0);
+    scene.tweens.add({
+      targets: mapInfo,
+      alpha: 1,
+      duration: 200,
+      ease: "Power1",
+      onComplete: () => {
+        // Add fade-out animation after 3 seconds
+        scene.time.delayedCall(3000, () => {
+          scene.tweens.add({
+            targets: mapInfo,
+            alpha: 0,
+            duration: 500,
+            ease: "Power1",
+            onComplete: () => {
+              mapInfo.destroy();
+              scene.mapInfo = null;
+            },
+          });
+        });
+      },
+    });
+
+    // Store reference to the object
+    scene.mapInfo = mapInfo;
   }
 
   // Initialize player system
@@ -460,14 +700,74 @@ document.addEventListener("DOMContentLoaded", function () {
       // Initialize building system
       scene.buildings = [];
 
+      // Get reference to UI scene
+      const uiScene = scene.scene.get("UIScene");
+
       console.log("Creating shop for current player...");
-      // Create shop for the current player
-      scene.shop = new Shop(scene, currentPlayer);
+      // Create shop UI in the UI scene
+      uiScene.shop = new Shop(uiScene, currentPlayer);
+      scene.shop = uiScene.shop; // Reference it in the main scene for compatibility
+
+      // Set a reference to the game scene so the shop can create building previews there
+      uiScene.shop.gameScene = scene;
+
+      // Override building preview creation to use the game scene
+      const originalCreateBuildingPreview = uiScene.shop.createBuildingPreview;
+      uiScene.shop.createBuildingPreview = function (type) {
+        // Store current scene temporarily
+        const tempScene = this.scene;
+
+        // Use game scene for creating previews
+        this.scene = this.gameScene;
+
+        // Call original method
+        originalCreateBuildingPreview.call(this, type);
+
+        // Restore UI scene for other operations
+        this.scene = tempScene;
+      };
+
+      // Override canPlaceBuilding to use the game scene for hex checks
+      const originalCanPlaceBuilding = uiScene.shop.canPlaceBuilding;
+      uiScene.shop.canPlaceBuilding = function (x, y) {
+        // Store current scene temporarily
+        const tempScene = this.scene;
+
+        // Use game scene for placement checks
+        this.scene = this.gameScene;
+
+        // Call original method
+        const result = originalCanPlaceBuilding.call(this, x, y);
+
+        // Restore UI scene
+        this.scene = tempScene;
+
+        return result;
+      };
+
+      // Override tryPlaceBuilding to use the game scene
+      const originalTryPlaceBuilding = uiScene.shop.tryPlaceBuilding;
+      uiScene.shop.tryPlaceBuilding = function (x, y) {
+        // Store current scene temporarily
+        const tempScene = this.scene;
+
+        // Use game scene for placement
+        this.scene = this.gameScene;
+
+        // Call original method
+        const result = originalTryPlaceBuilding.call(this, x, y);
+
+        // Restore UI scene
+        this.scene = tempScene;
+
+        return result;
+      };
 
       console.log("Creating economy UI for current player...");
-      // Create the economy UI for the current player
-      scene.economyUI = new EconomyUI(scene, currentPlayer.economy);
-      economyUI = scene.economyUI;
+      // Create the economy UI for the current player in the UI scene
+      uiScene.economyUI = new EconomyUI(uiScene, currentPlayer.economy);
+      economyUI = uiScene.economyUI;
+      scene.economyUI = uiScene.economyUI; // Reference it in the main scene for compatibility
 
       // Add createBuilding method to the scene
       scene.createBuilding = function (x, y, type, owner) {
@@ -489,9 +789,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function createGameObjects(scene) {
     try {
       // Find grass tiles for placing units
-      const grassTiles = scene.hexTiles.filter(
-        (hex) => hex.color === CONSTANTS.COLORS.GRASS
-      );
+      const grassTiles = scene.hexTiles.filter((hex) => hex.type === "land");
 
       if (grassTiles.length === 0) {
         console.error("No grass tiles found to place units!");
@@ -604,17 +902,20 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       // Process WASD keyboard input for camera movement
       if (keys.up.isDown) {
-        this.cameras.main.scrollY -= CONSTANTS.MOVEMENT.CAMERA_SPEED;
+        cameraController.targetY -= CONSTANTS.MOVEMENT.CAMERA_SPEED;
       }
       if (keys.down.isDown) {
-        this.cameras.main.scrollY += CONSTANTS.MOVEMENT.CAMERA_SPEED;
+        cameraController.targetY += CONSTANTS.MOVEMENT.CAMERA_SPEED;
       }
       if (keys.left.isDown) {
-        this.cameras.main.scrollX -= CONSTANTS.MOVEMENT.CAMERA_SPEED;
+        cameraController.targetX -= CONSTANTS.MOVEMENT.CAMERA_SPEED;
       }
       if (keys.right.isDown) {
-        this.cameras.main.scrollX += CONSTANTS.MOVEMENT.CAMERA_SPEED;
+        cameraController.targetX += CONSTANTS.MOVEMENT.CAMERA_SPEED;
       }
+
+      // Update camera position with smooth movement
+      cameraController.update(this.cameras.main);
 
       // Update players
       if (players && players.length > 0) {
@@ -680,108 +981,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Function to create the entire hexagonal grid
-  function createHexagonalGrid(scene, landMap) {
-    // Center of the grid in world coordinates
-    const centerX = 0;
-    const centerY = 0;
-
-    // Calculate the dimensions of the land map
-    const landHeight = landMap.length;
-    const landWidth = landMap[0].length;
-
-    // Calculate the offset to center the land map
-    const landOffsetRow =
-      Math.floor(CONSTANTS.GRID_SIZE / 2) - Math.floor(landHeight / 2);
-    const landOffsetCol =
-      Math.floor(CONSTANTS.GRID_SIZE / 2) - Math.floor(landWidth / 2);
-
-    // Create the grid
-    for (let row = 0; row < CONSTANTS.GRID_SIZE; row++) {
-      for (let col = 0; col < CONSTANTS.GRID_SIZE; col++) {
-        // Calculate hex position (using odd-q offset coordinates)
-        let x =
-          centerX +
-          col * CONSTANTS.HEX_WIDTH -
-          (CONSTANTS.GRID_SIZE * CONSTANTS.HEX_WIDTH) / 2;
-        let y =
-          centerY +
-          row * CONSTANTS.HEX_HEIGHT * 0.75 -
-          (CONSTANTS.GRID_SIZE * CONSTANTS.HEX_HEIGHT * 0.75) / 2;
-
-        // Offset for odd rows
-        if (row % 2 !== 0) {
-          x += CONSTANTS.HEX_WIDTH / 2;
-        }
-
-        // Determine if this is a grass or ocean tile
-        let hexColor = CONSTANTS.COLORS.OCEAN; // Default to ocean
-
-        // Check if this position falls within our land map
-        const landMapRow = row - landOffsetRow;
-        const landMapCol = col - landOffsetCol;
-
-        if (
-          landMapRow >= 0 &&
-          landMapRow < landHeight &&
-          landMapCol >= 0 &&
-          landMapCol < landWidth &&
-          landMap[landMapRow][landMapCol] === 1
-        ) {
-          hexColor = CONSTANTS.COLORS.GRASS; // This is a land tile
-        }
-
-        const hexGraphics = drawHexagon(
-          scene,
-          x,
-          y,
-          CONSTANTS.HEX_SIZE,
-          hexColor
-        );
-
-        // Store hex info for tank movement
-        scene.hexTiles.push({
-          x: x,
-          y: y,
-          color: hexColor,
-          gridPos: { row, col },
-        });
-      }
-    }
-  }
-
-  // Function to draw a single hexagon
-  function drawHexagon(scene, x, y, size, fillColor) {
-    const graphics = scene.add.graphics();
-    graphics.fillStyle(fillColor, 1);
-
-    const corners = 6;
-
-    graphics.beginPath();
-
-    for (let i = 0; i < corners; i++) {
-      const angle = (i * Math.PI) / 3 - Math.PI / 6;
-      const pointX = x + size * Math.cos(angle);
-      const pointY = y + size * Math.sin(angle);
-
-      if (i === 0) {
-        graphics.moveTo(pointX, pointY);
-      } else {
-        graphics.lineTo(pointX, pointY);
-      }
-    }
-
-    graphics.closePath();
-    graphics.fillPath();
-
-    // Add a subtle stroke to make hexagons more distinct
-    graphics.lineStyle(1, 0x000000, 0.3);
-    graphics.strokePath();
-
-    return graphics;
-  }
-
-  // Set up building selection handler
+  // Function to set up building selection handler
   function setupBuildingSelection(scene) {
     // Define building selection handler for the scene
     scene.onBuildingSelected = function (building) {
@@ -794,9 +994,8 @@ document.addEventListener("DOMContentLoaded", function () {
         selectedBuilding = null;
 
         // Hide deselect hint when nothing is selected
-        if (selectedUnits.length === 0 && deselectHint) {
-          deselectHint.destroy();
-          deselectHint = null;
+        if (selectedUnits.length === 0) {
+          scene.scene.get("UIScene").events.emit("hideDeselectHint");
         }
         return;
       }
@@ -832,8 +1031,8 @@ document.addEventListener("DOMContentLoaded", function () {
         building.showBarracksUI();
       }
 
-      // Show the deselect hint
-      showDeselectHint(scene);
+      // Show the deselect hint in the UI scene
+      scene.scene.get("UIScene").events.emit("showDeselectHint");
     };
   }
 });

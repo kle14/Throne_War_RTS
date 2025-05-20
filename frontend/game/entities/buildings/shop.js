@@ -419,9 +419,16 @@ export class Shop {
     // Enable debug tracking for mouse movement
     this.debugMouseTracking();
 
-    this.showMessage(
-      `Select location for ${buildingData.name} - Move your mouse to position it`
-    );
+    // Special message for oil rigs showing both production rates
+    if (type === "oilRig") {
+      this.showMessage(
+        `Select location for ${buildingData.name} - Produces ${buildingData.productionRate} gold per minute`
+      );
+    } else {
+      this.showMessage(
+        `Select location for ${buildingData.name} - Move your mouse to position it`
+      );
+    }
   }
 
   createBuildingPreview(type) {
@@ -481,6 +488,53 @@ export class Shop {
         graphics.strokeCircle(0, 0, size * 0.5);
         graphics.fillStyle(0x000000, 0.7);
         graphics.fillCircle(0, 0, size * 0.25);
+      } else if (type === "oilRig") {
+        // Draw oil rig platform - rectangular base
+        const rigWidth = size * 1.2;
+        const rigHeight = size * 0.8;
+        graphics.fillRect(-rigWidth / 2, -rigHeight / 2, rigWidth, rigHeight);
+        graphics.strokeRect(-rigWidth / 2, -rigHeight / 2, rigWidth, rigHeight);
+
+        // Draw derrick (drilling tower)
+        const towerWidth = size * 0.3;
+        const towerHeight = size * 0.8;
+        graphics.fillRect(
+          -towerWidth / 2,
+          -towerHeight,
+          towerWidth,
+          towerHeight
+        );
+        graphics.strokeRect(
+          -towerWidth / 2,
+          -towerHeight,
+          towerWidth,
+          towerHeight
+        );
+
+        // Add cross-beams
+        graphics.fillRect(
+          -towerWidth * 1.5,
+          -towerHeight * 0.7,
+          towerWidth * 3,
+          towerWidth * 0.5
+        );
+        graphics.strokeRect(
+          -towerWidth * 1.5,
+          -towerHeight * 0.7,
+          towerWidth * 3,
+          towerWidth * 0.5
+        );
+
+        // Add gold coin indicator
+        const iconGraphics = this.scene.add.graphics();
+        // Gold coin (gold)
+        iconGraphics.fillStyle(0xffd700, 1);
+        iconGraphics.fillCircle(0, size / 2, size / 5);
+        iconGraphics.lineStyle(1, 0x000000, 1);
+        iconGraphics.strokeCircle(0, size / 2, size / 5);
+
+        // Add to container
+        this.buildingPreview.add(iconGraphics);
       }
 
       // Add graphics to container
@@ -641,17 +695,39 @@ export class Shop {
     // Debug the hex information
     console.log(
       `Checking placement at hex: (${nearestHex.x}, ${nearestHex.y}), ` +
-        `type: ${nearestHex.color}, grass color is: ${CONSTANTS.COLORS.GRASS}`
+        `type: ${nearestHex.type}, color: ${nearestHex.color}`
     );
 
-    // Explicitly compare with the grass color value
-    const isGrass = nearestHex.color === CONSTANTS.COLORS.GRASS;
-    console.log(`Is this a grass tile? ${isGrass}`);
-
-    // Check if the hex is a valid placement location - MUST be grass
-    if (!isGrass) {
-      console.log("Cannot place building: Not a grass tile");
+    // Get the building data for the selected building type
+    const buildingData = BUILDING_TYPES[this.selectedBuildingType];
+    if (!buildingData) {
+      console.error("Invalid building type selected");
       return false;
+    }
+
+    // Check if the hex terrain type matches the building's valid terrain types
+    const isValidTerrain =
+      buildingData.validTerrainTypes &&
+      buildingData.validTerrainTypes.includes(nearestHex.type);
+
+    if (!isValidTerrain) {
+      console.log(
+        `Cannot place ${buildingData.name}: Not a valid terrain type (${nearestHex.type})`
+      );
+      return false;
+    }
+
+    // Special case for oil rig - check if there's an oil resource on this hex
+    if (
+      this.selectedBuildingType === "oilRig" &&
+      buildingData.requiresResource
+    ) {
+      if (nearestHex.resource !== buildingData.requiresResource) {
+        console.log(
+          `Cannot place Oil Rig: No oil resource found on this water hex`
+        );
+        return false;
+      }
     }
 
     // Check if the tile is already occupied by a building
@@ -742,27 +818,65 @@ export class Shop {
     console.log(`Can place at (${x}, ${y}): ${canPlace}`);
 
     if (!canPlace) {
-      // Check if we're trying to place on water
+      // Get the nearest hex to provide better error messages
       const nearestHex = this.findNearestHex(x, y);
-      if (nearestHex && nearestHex.color !== CONSTANTS.COLORS.GRASS) {
-        this.showMessage("Cannot build on water! Find grass tiles.", 2000);
-      } else if (nearestHex) {
-        // Check if tile is occupied
-        const existingBuilding =
-          this.scene.buildings &&
-          this.scene.buildings.find(
-            (building) =>
-              building.x === nearestHex.x && building.y === nearestHex.y
-          );
 
-        if (existingBuilding) {
-          this.showMessage("Tile already occupied by a building!", 2000);
-        } else {
-          this.showMessage("Cannot build here! Must be on grass.", 2000);
-        }
-      } else {
-        this.showMessage("Cannot build here! Invalid location.", 2000);
+      if (!nearestHex) {
+        this.showMessage(
+          "Invalid location. Cannot find a valid hex tile.",
+          3000
+        );
+        return;
       }
+
+      // Check if there's already a building
+      const existingBuilding =
+        this.scene.buildings &&
+        this.scene.buildings.find(
+          (building) =>
+            building.x === nearestHex.x && building.y === nearestHex.y
+        );
+
+      if (existingBuilding) {
+        this.showMessage("Tile already occupied by a building!", 2000);
+        return;
+      }
+
+      // Terrain type mismatch
+      if (
+        buildingData.validTerrainTypes &&
+        !buildingData.validTerrainTypes.includes(nearestHex.type)
+      ) {
+        if (this.selectedBuildingType === "oilRig") {
+          this.showMessage(`Oil Rigs can only be built on water tiles!`, 3000);
+        } else {
+          this.showMessage(
+            `${
+              buildingData.name
+            } must be built on ${buildingData.validTerrainTypes.join(
+              " or "
+            )} terrain!`,
+            3000
+          );
+        }
+        return;
+      }
+
+      // Special case for oil rig requiring oil resource
+      if (
+        this.selectedBuildingType === "oilRig" &&
+        nearestHex.type === "water" &&
+        nearestHex.resource !== "oil"
+      ) {
+        this.showMessage(
+          "Oil Rigs can only be built on water tiles with oil resources!",
+          3000
+        );
+        return;
+      }
+
+      // Default message
+      this.showMessage("Cannot build here! Invalid location.", 2000);
       return;
     }
 

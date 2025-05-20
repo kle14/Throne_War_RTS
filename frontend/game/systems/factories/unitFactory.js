@@ -157,9 +157,10 @@ export class UnitFactory {
       JSON.stringify(options)
     );
 
-    const validTiles =
+    // If valid tiles weren't provided, find all grass tiles
+    let validTiles =
       options.validTiles ||
-      this.scene.hexTiles.filter((hex) => hex.color === CONSTANTS.COLORS.GRASS);
+      this.scene.hexTiles.filter((hex) => hex.type === "land");
 
     if (validTiles.length === 0) {
       console.error("No valid tiles found to place engineer!");

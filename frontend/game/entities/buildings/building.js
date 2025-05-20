@@ -80,6 +80,39 @@ export class Building {
       this.sprite.fillCircle(0, 0, size * 0.5);
       this.sprite.fillStyle(0x000000, this.isBlueprint ? 0.3 : 1);
       this.sprite.fillCircle(0, 0, size * 0.25);
+    } else if (this.type === "oilRig") {
+      // Draw oil rig - rectangular base platform
+      const rigWidth = size * 1.2;
+      const rigHeight = size * 0.8;
+      this.sprite.fillRect(-rigWidth / 2, -rigHeight / 2, rigWidth, rigHeight);
+
+      // Draw derrick (drilling tower)
+      const towerWidth = size * 0.3;
+      const towerHeight = size * 0.8;
+      this.sprite.fillRect(
+        -towerWidth / 2,
+        -towerHeight,
+        towerWidth,
+        towerHeight
+      );
+
+      // Add cross-beams
+      this.sprite.fillRect(
+        -towerWidth * 1.5,
+        -towerHeight * 0.7,
+        towerWidth * 3,
+        towerWidth * 0.5
+      );
+
+      // If not a blueprint, add resource indicators
+      if (!this.isBlueprint) {
+        // Gold coin indicator (centered)
+        this.sprite.fillStyle(0xffd700, 1);
+        this.sprite.fillCircle(0, size / 2, size / 5);
+
+        // Reset fill style to main color for border
+        this.sprite.fillStyle(color, 1);
+      }
     }
 
     // Add a border
@@ -98,6 +131,32 @@ export class Building {
     } else if (this.type === "turret") {
       this.sprite.lineStyle(2, this.isBlueprint ? 0x3498db : 0x000000, 1);
       this.sprite.strokeCircle(0, 0, size * 0.5);
+    } else if (this.type === "oilRig") {
+      // Draw borders for oil rig
+      const rigWidth = size * 1.2;
+      const rigHeight = size * 0.8;
+      this.sprite.strokeRect(
+        -rigWidth / 2,
+        -rigHeight / 2,
+        rigWidth,
+        rigHeight
+      );
+
+      const towerWidth = size * 0.3;
+      const towerHeight = size * 0.8;
+      this.sprite.strokeRect(
+        -towerWidth / 2,
+        -towerHeight,
+        towerWidth,
+        towerHeight
+      );
+
+      this.sprite.strokeRect(
+        -towerWidth * 1.5,
+        -towerHeight * 0.7,
+        towerWidth * 3,
+        towerWidth * 0.5
+      );
     }
 
     // Create progress bar for blueprints
@@ -504,6 +563,61 @@ export class Building {
         this.sprite.strokeCircle(0, 0, size * 0.5);
         this.sprite.fillStyle(0x000000, 1);
         this.sprite.fillCircle(0, 0, size * 0.25);
+      } else if (this.type === "oilRig") {
+        // Draw oil rig with player color
+        // Base platform
+        const rigWidth = size * 1.2;
+        const rigHeight = size * 0.8;
+        this.sprite.fillRect(
+          -rigWidth / 2,
+          -rigHeight / 2,
+          rigWidth,
+          rigHeight
+        );
+        this.sprite.lineStyle(2, 0x000000, 1);
+        this.sprite.strokeRect(
+          -rigWidth / 2,
+          -rigHeight / 2,
+          rigWidth,
+          rigHeight
+        );
+
+        // Derrick tower
+        const towerWidth = size * 0.3;
+        const towerHeight = size * 0.8;
+        this.sprite.fillStyle(mixedColor, 1);
+        this.sprite.fillRect(
+          -towerWidth / 2,
+          -towerHeight,
+          towerWidth,
+          towerHeight
+        );
+        this.sprite.strokeRect(
+          -towerWidth / 2,
+          -towerHeight,
+          towerWidth,
+          towerHeight
+        );
+
+        // Cross beams
+        this.sprite.fillRect(
+          -towerWidth * 1.5,
+          -towerHeight * 0.7,
+          towerWidth * 3,
+          towerWidth * 0.5
+        );
+        this.sprite.strokeRect(
+          -towerWidth * 1.5,
+          -towerHeight * 0.7,
+          towerWidth * 3,
+          towerWidth * 0.5
+        );
+
+        // Gold coin indicator (centered)
+        this.sprite.fillStyle(0xffd700, 1);
+        this.sprite.fillCircle(0, size / 2, size / 5);
+        this.sprite.lineStyle(1, 0x000000, 1);
+        this.sprite.strokeCircle(0, size / 2, size / 5);
       }
     }
   }
@@ -566,11 +680,78 @@ export class Building {
   }
 
   activateBuilding() {
-    // Specific actions based on building type
-    if (this.type === "goldMine") {
-      // Start gold production
-      this.startProduction();
+    console.log(`Activating building functionality for ${this.type}`);
+
+    // Building-specific activations
+    switch (this.type) {
+      case "goldMine":
+        this.activateGoldMine();
+        break;
+      case "oilRig":
+        this.activateOilRig();
+        break;
+      case "turret":
+        this.activateTurret();
+        break;
+      // Add cases for other building types as needed
     }
+  }
+
+  /**
+   * Activate Gold Mine functionality - increase gold production
+   */
+  activateGoldMine() {
+    if (!this.owner || !this.owner.economy) {
+      console.warn("Cannot activate gold mine: No owner or economy found");
+      return;
+    }
+
+    const productionRate = this.buildingData.productionRate || 100;
+    console.log(`Activating gold mine: +${productionRate} gold/min`);
+
+    // Add production rate to player's economy
+    const currentRate = this.owner.economy.getGoldProductionRate();
+    this.owner.economy.setGoldProductionRate(currentRate + productionRate);
+
+    console.log(
+      `Player ${this.owner.id} gold production increased to ${
+        currentRate + productionRate
+      }/min`
+    );
+  }
+
+  /**
+   * Activate Oil Rig functionality - increase gold production
+   */
+  activateOilRig() {
+    if (!this.owner || !this.owner.economy) {
+      console.warn("Cannot activate oil rig: No owner or economy found");
+      return;
+    }
+
+    const goldProductionRate = this.buildingData.productionRate || 150;
+
+    console.log(`Activating oil rig: +${goldProductionRate} gold/min`);
+
+    // Add gold production rate to player's economy
+    const currentGoldRate = this.owner.economy.getGoldProductionRate();
+    this.owner.economy.setGoldProductionRate(
+      currentGoldRate + goldProductionRate
+    );
+
+    console.log(
+      `Player ${this.owner.id} gold production increased to ${
+        currentGoldRate + goldProductionRate
+      }/min`
+    );
+  }
+
+  /**
+   * Activate Turret functionality - enable auto-attack
+   */
+  activateTurret() {
+    console.log("Activating turret defense system");
+    // TODO: Implement turret attack functionality
   }
 
   update() {

@@ -19,7 +19,10 @@ export class PathFinder {
   // Get neighboring hexes (only passable tiles)
   getNeighbors(
     hex,
-    passableCheck = (hex) => hex.color === CONSTANTS.COLORS.GRASS
+    passableCheck = (hex) => {
+      // Default behavior: land units can only traverse land
+      return hex.passable && hex.type === "land";
+    }
   ) {
     const neighbors = [];
     const hexes = this.scene.hexTiles;
@@ -57,7 +60,7 @@ export class PathFinder {
         (h) => h.gridPos.row === neighborRow && h.gridPos.col === neighborCol
       );
 
-      // Only add if it passes the custom check (default: is grass)
+      // Only add if it passes the custom check
       if (neighbor && passableCheck(neighbor)) {
         neighbors.push(neighbor);
       }
@@ -143,6 +146,22 @@ export class PathFinder {
 
     // No path found
     return null;
+  }
+
+  // Generate passable check functions for different unit types
+  static getPassableCheckForUnitType(unitType) {
+    switch (unitType) {
+      case "naval":
+        // Naval units can only move on water
+        return (hex) => hex.passable && hex.type === "water";
+      case "amphibious":
+        // Amphibious units can move on both land and water
+        return (hex) => hex.passable;
+      case "land":
+      default:
+        // Land units can only move on land
+        return (hex) => hex.passable && hex.type === "land";
+    }
   }
 }
 

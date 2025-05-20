@@ -4,7 +4,7 @@
  */
 export const CONSTANTS = {
   // Grid and hex tile configuration
-  GRID_SIZE: 30,
+  GRID_SIZE: 200,
   HEX_SIZE: 30,
   HEX_WIDTH: 52,
   HEX_HEIGHT: 60,
@@ -16,21 +16,25 @@ export const CONSTANTS = {
     SELECTION: 0xffffff, // White
     PLAYER_COLORS: [0xff0000, 0x0000ff, 0x00ff00, 0xffff00], // Red, Blue, Green, Yellow
     PATH: 0xffffff, // White for path visualization
+    RESOURCES: {
+      GOLD: 0xffd700, // Gold color
+      OIL: 0x333333, // Dark oil color
+    },
   },
 
   // Movement settings
   MOVEMENT: {
-    DEFAULT_SPEED: 2,
-    SOLDIER_SPEED: 2.5,
-    TANK_SPEED: 1.8,
-    SCOUT_SPEED: 3.5,
-    SNIPER_SPEED: 2.2,
-    CAMERA_SPEED: 10,
+    DEFAULT_SPEED: 8,
+    SOLDIER_SPEED: 10,
+    TANK_SPEED: 7.2,
+    SCOUT_SPEED: 14,
+    SNIPER_SPEED: 8.8,
+    CAMERA_SPEED: 40,
   },
 
   // Mobile entity settings
   MOBILE: {
-    DEFAULT_SPEED: 2,
+    DEFAULT_SPEED: 8,
     DEFAULT_ATTACK_RANGE: 100,
   },
 
@@ -77,13 +81,16 @@ export const CONSTANTS = {
   // Economy settings
   ECONOMY: {
     INITIAL_GOLD: 500,
+    INITIAL_OIL: 0, // Start with no oil
     BASE_PRODUCTION_RATE: 500, // Gold per minute
+    OIL_PRODUCTION_RATE: 100, // Oil per minute for oil rigs
     INFANTRY_COST: 100,
     TANK_COST: 250,
     BUILDER_COST: 150,
     BARRACKS_COST: 300,
     FACTORY_COST: 600,
     GOLD_MINE_COST: 400,
+    OIL_RIG_COST: 500, // Cost to build an oil rig
     TURRET_COST: 250,
   },
 
@@ -93,6 +100,24 @@ export const CONSTANTS = {
     CRITICAL_CHANCE: 0.1,
     CRITICAL_MULTIPLIER: 2,
     ATTACK_COOLDOWN: 1000, // ms
+  },
+
+  // Resource types
+  RESOURCES: {
+    TYPES: {
+      GOLD: "gold",
+      OIL: "oil",
+    },
+    REQUIREMENTS: {
+      // Oil can only be placed on water tiles
+      OIL: {
+        VALID_TERRAIN: ["water"],
+      },
+      // Gold can only be placed on land tiles
+      GOLD: {
+        VALID_TERRAIN: ["land"],
+      },
+    },
   },
 };
 

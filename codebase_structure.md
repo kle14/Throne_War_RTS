@@ -25,6 +25,16 @@ frontend/game/
 │   ├── debug-manager.js                  # Debugging utilities
 │   ├── resource-loader.js                # Resource loading
 │   └── config-manager.js                 # Configuration management
+├── maps/                                 # Map system
+│   ├── base/                             # Base maps included with the game
+│   │   ├── default_map.js                # Original default map
+│   │   └── island_map.js                 # Island-based map example
+│   ├── templates/                        # Map templates
+│   │   └── map_template.js               # Template for creating new maps
+│   ├── utils/                            # Map utilities
+│   │   └── map-loader.js                 # Map loading functionality
+│   ├── map-registry.js                   # Registry of all available maps
+│   └── README.md                         # Map system documentation
 ├── entities/                             # Game entities
 │   ├── base/                             # Base classes
 │   │   ├── entity.js                     # Base entity class
@@ -247,6 +257,24 @@ The unit factory in `systems/factories/unitFactory.js` provides:
 - Centralized unit creation
 - Unit placement logic
 - Unit property initialization
+
+### Map System
+
+The map system in `frontend/game/maps/` provides:
+
+- Map data format and storage
+- Map loading and rendering
+- Different terrain types (currently land and water)
+- Player starting positions and resource locations
+- Extensible framework for creating new maps
+
+Key components:
+
+- `map-loader.js` - Handles loading and rendering maps in the game
+- `map-registry.js` - Central registry of all available maps
+- The base map system supports the original default map and additional custom maps
+- Maps use a hex grid with axial coordinate system (q,r) for precise positioning
+- Each map contains terrain data, player start positions, and resource locations
 
 ## Multiplayer Architecture
 

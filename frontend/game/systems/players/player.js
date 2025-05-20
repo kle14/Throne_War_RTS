@@ -27,10 +27,12 @@ export class Player {
         scene,
         id,
         CONSTANTS.ECONOMY.INITIAL_GOLD,
-        CONSTANTS.ECONOMY.BASE_PRODUCTION_RATE
+        CONSTANTS.ECONOMY.INITIAL_OIL,
+        CONSTANTS.ECONOMY.BASE_PRODUCTION_RATE,
+        CONSTANTS.ECONOMY.OIL_PRODUCTION_RATE
       );
       console.log(
-        `Player ${id} economy initialized with ${CONSTANTS.ECONOMY.INITIAL_GOLD} gold`
+        `Player ${id} economy initialized with ${CONSTANTS.ECONOMY.INITIAL_GOLD} gold and ${CONSTANTS.ECONOMY.INITIAL_OIL} oil`
       );
     } catch (err) {
       console.error(`Error initializing economy for player ${id}:`, err);
@@ -110,6 +112,14 @@ export class Player {
   }
 
   /**
+   * Get the player's oil amount
+   * @returns {number} Current oil amount
+   */
+  getOil() {
+    return this.economy ? this.economy.getOil() : 0;
+  }
+
+  /**
    * Check if the player can afford an amount of gold
    * @param {number} amount - The amount to check
    * @returns {boolean} True if the player can afford, false otherwise
@@ -128,12 +138,31 @@ export class Player {
   }
 
   /**
+   * Spend oil from the player's economy
+   * @param {number} amount - The amount to spend
+   * @returns {boolean} True if successful, false otherwise
+   */
+  spendOil(amount) {
+    return this.economy ? this.economy.spendOil(amount) : false;
+  }
+
+  /**
    * Add gold to the player's economy
    * @param {number} amount - The amount to add
    */
   addGold(amount) {
     if (this.economy) {
       this.economy.addGold(amount);
+    }
+  }
+
+  /**
+   * Add oil to the player's economy
+   * @param {number} amount - The amount to add
+   */
+  addOil(amount) {
+    if (this.economy) {
+      this.economy.addOil(amount);
     }
   }
 
